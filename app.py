@@ -42,6 +42,24 @@ def load_data():
 
 df = load_data()
 
+def format_range(min_value, max_value, unit="ft"):
+    """Display a complete mature-size range consistently."""
+    try:
+        min_num = float(min_value)
+        max_num = float(max_value)
+    except (TypeError, ValueError):
+        return "Not available"
+
+    if pd.isna(min_num) or pd.isna(max_num):
+        return "Not available"
+
+    def clean(v):
+        return str(int(v)) if float(v).is_integer() else f"{v:g}"
+
+    if min_num == max_num:
+        return f"{clean(min_num)} {unit}"
+    return f"{clean(min_num)} to {clean(max_num)} {unit}"
+
 # ---------- Styling ----------
 st.markdown("""
 <style>
@@ -212,7 +230,7 @@ def evaluate_match(row):
             matches.append(f"mature height stays at or below {max_height} ft")
         else:
             misses.append(
-                f"mature height may reach {int(row['height_max'])} ft; your maximum is {max_height} ft"
+                f"maximum mature height is {int(row['height_max'])} ft; your limit is {max_height} ft"
             )
 
     if max_width is not None:
@@ -222,7 +240,7 @@ def evaluate_match(row):
             matches.append(f"mature width stays at or below {max_width} ft")
         else:
             misses.append(
-                f"mature width may reach {int(row['width_max'])} ft; your maximum is {max_width} ft"
+                f"maximum mature width is {int(row['width_max'])} ft; your limit is {max_width} ft"
             )
 
     if flowering != "Either":
@@ -347,9 +365,15 @@ def render_tree_card(row):
         )
 
         m1, m2, m3 = st.columns(3)
-        m1.metric("Height", f"{int(row['height_min'])}–{int(row['height_max'])} ft")
-        m2.metric("Width", f"{int(row['width_min'])}–{int(row['width_max'])} ft")
-        m3.metric("Flowers", row["flowering"])
+        with m1:
+            st.markdown("**Mature Height**")
+            st.write(format_range(row["height_min"], row["height_max"]))
+        with m2:
+            st.markdown("**Mature Width**")
+            st.write(format_range(row["width_min"], row["width_max"]))
+        with m3:
+            st.markdown("**Flowers**")
+            st.write(row["flowering"])
 
         st.write(row["description"])
         st.markdown(f"**Sun:** {row['sun_needs'].replace(';', ', ')}")
