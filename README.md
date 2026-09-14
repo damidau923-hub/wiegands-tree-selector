@@ -1,15 +1,27 @@
-# Acme Nursery Tree Sales Assistant — POC v18
+# Acme Nursery Tree Sales Assistant — POC v19
 
-This demonstration uses the placeholder name **Acme Nursery**.
+## Changes in v19
 
-## Current sales flow
-1. Enter customer criteria.
-2. Review broad tree choices.
-3. Select tree types to explore.
-4. Compare cultivars in the Quick Comparison table.
-5. Check the cultivars the customer wants to review.
-6. Only checked cultivars appear in the detailed review.
+### Smarter sun matching
+Sun exposure now uses three outcomes:
 
-The Full Match / Partial Match / May Fit logic is unchanged.
+- **Preferred** — can qualify as a Full Match
+- **Tolerated** — remains visible as a Partial Match, with an explanation that growth, flowering, or fall color may be reduced
+- **Unsuitable** — treated as a mismatch for the sun requirement
 
-The internal CSV retains one legacy field name for backward compatibility with the existing POC code, but it is not presented to the user as branding.
+Examples:
+- A Full Sun tree on a Partial Sun site is no longer automatically a Full Match.
+- It can still appear as a Partial Match when that exposure is considered tolerated.
+
+### Quick Comparison
+The comparison table now includes:
+- Show Details checkbox
+- Tree / Cultivar
+- Match
+- Mature Height
+- Mature Width
+- Flowers
+- Fall Color
+- Sun
+
+The rest of the sales flow is unchanged.

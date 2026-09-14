@@ -364,11 +364,23 @@ candidates = df[df["michigan_suitable"].astype(str).str.lower().eq("yes")].copy(
 if tree_type != "Any":
     candidates = candidates[candidates["tree_type"] == tree_type]
 
-SUN_COMPATIBILITY = {
-    "Full Sun": {"Full Sun"},
-    "Partial Sun": {"Full Sun", "Partial Sun", "Partial Shade"},
-    "Partial Shade": {"Partial Sun", "Partial Shade", "Shade"},
-    "Shade": {"Shade", "Partial Shade"},
+SUN_MATCH = {
+    "Full Sun": {
+        "preferred": {"Full Sun"},
+        "tolerated": {"Partial Sun"},
+    },
+    "Partial Sun": {
+        "preferred": {"Partial Sun"},
+        "tolerated": {"Full Sun", "Partial Shade"},
+    },
+    "Partial Shade": {
+        "preferred": {"Partial Shade"},
+        "tolerated": {"Partial Sun", "Shade"},
+    },
+    "Shade": {
+        "preferred": {"Shade"},
+        "tolerated": {"Partial Shade"},
+    },
 }
 
 def evaluate_match(row):
@@ -426,16 +438,23 @@ def evaluate_match(row):
             )
 
     if sun != "Either":
-        acceptable = SUN_COMPATIBILITY[sun]
-        plant_sun = [s.strip() for s in str(row["sun_needs"]).split(";")]
-        ok = any(option in acceptable for option in plant_sun)
-        checks.append(ok)
-        if ok:
-            matches.append(f"fits the requested {sun.lower()} conditions")
-        else:
-            misses.append(
-                f"listed light needs are {str(row['sun_needs']).replace(';', ', ')}; you requested {sun}"
+        tree_sun = {s.strip() for s in str(row["sun_needs"]).split(";") if s.strip()}
+        preferred = SUN_MATCH.get(sun, {}).get("preferred", set())
+        tolerated = SUN_MATCH.get(sun, {}).get("tolerated", set())
+
+        if tree_sun & preferred:
+            ok = True
+            matches.append(f"preferred light match ({sun})")
+        elif tree_sun & tolerated:
+            ok = False
+            borderlines.append(
+                f"light is tolerated rather than preferred for this site ({sun}); "
+                "growth, flowering, or fall color may be reduced"
             )
+        else:
+            ok = False
+            misses.append(f"light requirement does not fit the selected site ({sun})")
+        checks.append(ok)
 
     if not checks:
         status = "Full Match"
@@ -664,16 +683,17 @@ with left:
                     lambda x: "Yes" if str(x).strip().lower() == "yes" else "No"
                 )
                 comparison["Fall Color"] = comparison["fall_color"].fillna("Not specified")
+                comparison["Sun"] = comparison["sun_needs"].fillna("Not specified").str.replace(";", ", ", regex=False)
 
                 comparison = comparison[
-                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color"]
+                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color", "Sun"]
                 ]
 
                 edited_comparison = st.data_editor(
                     comparison,
                     hide_index=True,
                     use_container_width=True,
-                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color"],
+                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color", "Sun"],
                     column_config={
                         "Select": st.column_config.CheckboxColumn(
                             "Show Details",
@@ -688,6 +708,7 @@ with left:
                         "Width": st.column_config.TextColumn("Mature Width", width="medium"),
                         "Flowers": st.column_config.TextColumn("Flowers", width="small"),
                         "Fall Color": st.column_config.TextColumn("Fall Color", width="medium"),
+                        "Sun": st.column_config.TextColumn("Sun", width="medium"),
                     },
                     key="quick_comparison_editor",
                 )
@@ -740,7 +761,8 @@ with right:
     st.caption(
         "Full Match means every selected requirement fully fits. "
         "For height and width, May Fit means the lower end of the expected mature range is within the customer's limit "
-        "but the upper end exceeds it."
+        "but the upper end exceeds it. For sun, preferred light can be a Full Match; tolerated light remains "
+        "visible as a Partial Match with an explanation."
     )
 
     with st.expander("POC development notes"):
