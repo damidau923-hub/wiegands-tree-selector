@@ -1,14 +1,18 @@
-# Acme Nursery Tree Sales Assistant — POC v23
+# Acme Nursery Tree Sales Assistant — POC v24
 
-## Change in v23
+## New in v24: Flower Color
 
-Under **Sun Needs**, **Either** has been renamed to **Any**.
+A new **Flower Color** field has been added to:
+- the tree database
+- Quick Comparison
+- detailed cultivar cards
 
-Choices:
-- Any
-- Full Sun
-- Partial Sun
-- Partial Shade
-- Shade
+Examples now shown in the POC include:
+- Kousa Dogwood — White
+- Venus Dogwood — White
+- Cornelian Cherry Dogwood — Yellow
+- Eastern Redbud — Rosy pink
+- Ivory Silk Japanese Tree Lilac — Creamy white
+- Limelight Hydrangea on Standard — Lime green to creamy white; blushes pink
 
-**Any** means sunlight is not used as a matching requirement. Selecting a specific exposure still uses the Preferred / Tolerated / Unsuitable matching logic.
+Where a flowering entry is too generic or the exact cultivar color still needs confirmation, the field is marked **To verify** or **Varies by cultivar** rather than guessed.
