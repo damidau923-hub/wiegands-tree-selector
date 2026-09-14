@@ -1,11 +1,24 @@
-# Wiegand's Tree Sales Assistant — POC v15
+# Wiegand's Tree Sales Assistant — POC v16
 
-## Fixes the broad-choice crash
+## New: Quick Comparison table
 
-The v14 broad-choice screen accidentally read from the pre-evaluation `candidates` table. Match fields such as `match_status` exist only after candidates are evaluated.
+After the salesperson selects one or more broad tree choices, the app now shows a quick comparison table before the detailed cultivar cards.
 
-v15 now:
-- builds match results in `evaluated`;
-- reads broad choices from `evaluated`;
-- keeps the required match columns even when a search returns zero candidates;
-- retains the criteria → broad choices → cultivar review workflow.
+Columns:
+- Tree / Cultivar
+- Match
+- Mature Height
+- Mature Width
+- Flowers
+- Fall Color
+
+Full Matches appear first, followed by Partial Matches.
+
+Updated sales flow:
+1. Enter customer criteria
+2. Review broad tree choices
+3. Select the tree types the customer wants to explore
+4. Compare matching cultivars in the Quick Comparison table
+5. Review detailed cultivar cards
+
+The existing Full Match / Partial Match / May Fit logic is unchanged.

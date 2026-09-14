@@ -638,13 +638,52 @@ with left:
             if not selected_groups:
                 st.info("Select one or more tree types above to drill down to cultivars.")
             else:
-                st.subheader("3. Review Cultivars")
                 selected_rows = visible_matches[visible_matches["sales_group"].isin(selected_groups)].copy()
                 selected_rows["status_order"] = selected_rows["match_status"].map({"Full Match": 0, "Partial Match": 1})
                 selected_rows = selected_rows.sort_values(
-                    ["sales_group", "status_order", "rank_score"],
+                    ["status_order", "sales_group", "rank_score"],
                     ascending=[True, True, False]
                 )
+
+                st.subheader("3. Quick Comparison")
+                st.caption(
+                    "Compare the matching cultivars at a glance. Full Matches appear first, followed by Partial Matches."
+                )
+
+                comparison = selected_rows.copy()
+                comparison["Tree / Cultivar"] = comparison["common_name"]
+                comparison["Match"] = comparison["match_status"]
+                comparison["Height"] = comparison.apply(
+                    lambda r: format_range(r["height_min"], r["height_max"]), axis=1
+                )
+                comparison["Width"] = comparison.apply(
+                    lambda r: format_range(r["width_min"], r["width_max"]), axis=1
+                )
+                comparison["Flowers"] = comparison["flowering"].apply(
+                    lambda x: "Yes" if str(x).strip().lower() == "yes" else "No"
+                )
+                comparison["Fall Color"] = comparison["fall_color"].fillna("Not specified")
+
+                comparison = comparison[
+                    ["Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color"]
+                ]
+
+                st.dataframe(
+                    comparison,
+                    hide_index=True,
+                    use_container_width=True,
+                    column_config={
+                        "Tree / Cultivar": st.column_config.TextColumn("Tree / Cultivar", width="large"),
+                        "Match": st.column_config.TextColumn("Match", width="medium"),
+                        "Height": st.column_config.TextColumn("Mature Height", width="medium"),
+                        "Width": st.column_config.TextColumn("Mature Width", width="medium"),
+                        "Flowers": st.column_config.TextColumn("Flowers", width="small"),
+                        "Fall Color": st.column_config.TextColumn("Fall Color", width="medium"),
+                    },
+                )
+
+                st.subheader("4. Review Cultivars")
+                st.caption("Open the detailed cards below when the customer wants more information.")
 
                 for group in selected_groups:
                     meta = GROUP_OVERVIEWS.get(group, GROUP_OVERVIEWS["Other"])
@@ -668,7 +707,7 @@ with right:
 
     st.divider()
     st.markdown("#### Sales flow")
-    st.caption("1) Enter criteria. 2) Review recommended tree types. 3) Select the types the customer likes. 4) Compare actual cultivars.")
+    st.caption("1) Enter criteria. 2) Review broad choices. 3) Select the types the customer likes. 4) Compare cultivars in the quick table. 5) Review detailed cultivar cards.")
 
     st.divider()
     st.markdown("#### Mature size")
