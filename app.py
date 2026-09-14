@@ -47,7 +47,42 @@ def load_data():
 
     return data
 
+
+def sales_group_for_row(row):
+    name = str(row.get("common_name", ""))
+
+    if "Hydrangea" in name and "Standard" in name:
+        return "Hydrangea Tree on Standard"
+    if "Lilac on Standard" in name or "Korean Lilac on Standard" in name:
+        return "Lilac Tree on Standard"
+    if "Japanese Tree Lilac" in name or "Ivory Silk" in name:
+        return "Japanese Tree Lilac"
+    if "Rose of Sharon" in name:
+        return "Rose of Sharon Tree Form"
+    if "Japanese Maple" in name:
+        return "Japanese Maple"
+    if "Serviceberry" in name:
+        return "Serviceberry"
+    if "Redbud" in name:
+        return "Redbud"
+    if "Dogwood" in name:
+        return "Dogwood"
+    if "Crabapple" in name:
+        return "Crabapple"
+    if "Birch" in name:
+        return "Birch"
+    if "Beech" in name:
+        return "Beech"
+    if "Oak" in name:
+        return "Oak"
+    if "Maple" in name:
+        return "Maple"
+    if "Ginkgo" in name:
+        return "Ginkgo"
+    return "Other"
+
 df = load_data()
+df["sales_group"] = df.apply(sales_group_for_row, axis=1)
 
 def format_range(min_value, max_value, unit="ft"):
     """Display a complete mature-size range consistently."""
@@ -66,6 +101,86 @@ def format_range(min_value, max_value, unit="ft"):
     if min_num == max_num:
         return f"{clean(min_num)} {unit}"
     return f"{clean(min_num)} to {clean(max_num)} {unit}"
+
+
+GROUP_OVERVIEWS = {
+    "Hydrangea Tree on Standard": {
+        "label": "Hydrangea Tree on Standard",
+        "summary": "Small flowering tree-form hydrangeas with large summer blooms.",
+        "why": "Good for compact spaces where the customer wants strong flower impact."
+    },
+    "Lilac Tree on Standard": {
+        "label": "Lilac Tree on Standard",
+        "summary": "Shrub lilacs trained or grafted onto a single trunk, giving the appearance of a small ornamental tree.",
+        "why": "Good when a customer wants familiar lilac flowers and fragrance in tree form."
+    },
+    "Japanese Tree Lilac": {
+        "label": "Japanese Tree Lilac",
+        "summary": "Naturally tree-form lilacs with creamy summer flowers and a true small-tree structure.",
+        "why": "Useful when the customer wants a flowering small tree rather than a shrub trained on a standard."
+    },
+    "Rose of Sharon Tree Form": {
+        "label": "Rose of Sharon on Standard",
+        "summary": "A narrow ornamental tree form with a long summer flowering period.",
+        "why": "Useful where late-season flowers and a relatively compact footprint are important."
+    },
+    "Japanese Maple": {
+        "label": "Japanese Maple",
+        "summary": "Small ornamental maples valued for foliage color, graceful form, and specimen character.",
+        "why": "Best for customers who value foliage and structure more than flowers."
+    },
+    "Serviceberry": {
+        "label": "Serviceberry",
+        "summary": "Small ornamental trees with spring flowers, berries, fall color, and wildlife value.",
+        "why": "A strong all-season choice for customers who want several seasons of interest."
+    },
+    "Redbud": {
+        "label": "Redbud",
+        "summary": "Small spring-flowering trees with pink to purple flowers before leaf-out.",
+        "why": "Excellent where spring flower impact and modest mature size are priorities."
+    },
+    "Dogwood": {
+        "label": "Dogwood",
+        "summary": "Refined ornamental trees known for flowers, layered branching, and seasonal interest.",
+        "why": "Useful as a focal-point flowering tree."
+    },
+    "Crabapple": {
+        "label": "Flowering Crabapple",
+        "summary": "Compact ornamental trees with abundant spring flowers and decorative fruit.",
+        "why": "Good for customers who want a classic flowering ornamental."
+    },
+    "Birch": {
+        "label": "Birch",
+        "summary": "Trees valued for distinctive bark, graceful form, and light canopy character.",
+        "why": "Useful when bark and overall tree character are priorities."
+    },
+    "Beech": {
+        "label": "Beech",
+        "summary": "Long-lived specimen or shade trees with dense canopies and strong foliage character.",
+        "why": "Best where there is enough room for a substantial long-term tree."
+    },
+    "Oak": {
+        "label": "Oak",
+        "summary": "Large, durable shade trees with strong structure and long life spans.",
+        "why": "Best for customers with room for a major canopy tree."
+    },
+    "Maple": {
+        "label": "Maple",
+        "summary": "Shade and ornamental trees commonly selected for fall color, form, and dependable landscape performance.",
+        "why": "Useful where shade and fall color are important."
+    },
+    "Ginkgo": {
+        "label": "Ginkgo",
+        "summary": "Distinctive trees with fan-shaped leaves and bright yellow fall color.",
+        "why": "A durable choice when unique foliage and fall color are desirable."
+    },
+    "Other": {
+        "label": "Other Recommended Trees",
+        "summary": "Additional tree choices that fit or nearly fit the customer's requirements.",
+        "why": "Worth reviewing when they satisfy the site and size requirements."
+    },
+}
+
 
 # ---------- Styling ----------
 st.markdown("""
@@ -189,7 +304,7 @@ st.markdown("""
 <div class="hero">
   <div class="hero-title">Wiegand's Tree Sales Assistant</div>
   <div class="hero-sub">
-    Help a customer narrow the choices quickly, then compare full and partial matches side by side.
+    Guide a customer from site criteria to recommended tree types, then drill down to the actual cultivars.
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -226,7 +341,17 @@ with st.sidebar:
 
     result_count = st.slider("Results per section", 3, 10, 5)
 
-    find_trees = st.button("Find Trees", type="primary", use_container_width=True)
+    if "search_started" not in st.session_state:
+        st.session_state.search_started = False
+
+    if st.button("Find Trees", type="primary", use_container_width=True):
+        st.session_state.search_started = True
+
+    find_trees = st.session_state.search_started
+
+    if find_trees and st.button("Start New Search", use_container_width=True):
+        st.session_state.search_started = False
+        st.rerun()
 
     st.divider()
     st.caption(
@@ -365,7 +490,7 @@ else:
     partial_matches = evaluated
 
 # ---------- Results ----------
-left, right = st.columns([2.4, 1], gap="large")
+left, right = st.columns([2.6, 1], gap="large")
 
 def render_tree_card(row):
     st.markdown('<div class="tree-card">', unsafe_allow_html=True)
@@ -382,28 +507,16 @@ def render_tree_card(row):
             )
 
         if row["match_status"] == "Full Match":
-            st.markdown(
-                '<div class="match-pill">FULL MATCH</div>',
-                unsafe_allow_html=True
-            )
+            st.markdown('<div class="match-pill">FULL MATCH</div>', unsafe_allow_html=True)
         else:
-            st.markdown(
-                '<div class="status-pill"><b>PARTIAL MATCH</b></div>',
-                unsafe_allow_html=True
-            )
+            st.markdown('<div class="status-pill"><b>PARTIAL MATCH</b></div>', unsafe_allow_html=True)
 
-        st.markdown(
-            f'<div class="status-pill">{row["wiegands_status"]}</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown(f'<div class="status-pill">{row["wiegands_status"]}</div>', unsafe_allow_html=True)
 
     with c2:
         st.markdown(f"### {row['common_name']}")
         st.markdown(f"*{row['botanical_name']}*")
-        st.markdown(
-            f'<div class="meta">{row["tree_type"]}</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown(f'<div class="meta">{row["tree_type"]}</div>', unsafe_allow_html=True)
 
         m1, m2, m3 = st.columns(3)
         with m1:
@@ -458,32 +571,81 @@ def render_tree_card(row):
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+def group_summary_table(matches_df):
+    if matches_df.empty:
+        return pd.DataFrame(columns=["sales_group", "full_count", "partial_count", "best_rank"])
+    g = matches_df.groupby("sales_group").agg(
+        full_count=("match_status", lambda s: int((s == "Full Match").sum())),
+        partial_count=("match_status", lambda s: int((s == "Partial Match").sum())),
+        best_rank=("rank_score", "max")
+    ).reset_index()
+    g["total"] = g["full_count"] + g["partial_count"]
+    return g.sort_values(["full_count", "best_rank", "total"], ascending=[False, False, False])
+
 with left:
-    st.subheader("Customer Recommendations")
+    st.subheader("1. Broad Choices That Fit the Customer")
 
     if not find_trees:
         st.info("Choose the customer's criteria, then tap **Find Trees**.")
-    elif candidates.empty:
-        st.warning("No Michigan-suitable trees are available in the selected tree category.")
     else:
-        st.markdown("### Full Matches")
-        if full_matches.empty:
-            st.info("No trees meet every selected requirement.")
-        else:
-            st.write(f"These **{len(full_matches)}** tree(s) meet all selected requirements.")
-            for _, row in full_matches.iterrows():
-                render_tree_card(row)
+        visible_matches = candidates[candidates["match_status"].isin(["Full Match", "Partial Match"])].copy()
 
-        st.markdown("### Other Possibilities — Partial Matches")
-        if partial_matches.empty:
-            st.caption("No partial matches to show.")
+        if visible_matches.empty:
+            st.warning("No tree types meet or partially meet the selected criteria.")
         else:
+            group_table = group_summary_table(visible_matches)
+            available_groups = group_table["sales_group"].tolist()
+
             st.write(
-                "These trees meet **some, but not all**, of the selected requirements. "
-                "Each card explains exactly what falls outside the customer's criteria."
+                "Start with the types of trees that could work. Review the overview with the customer, "
+                "then select one or more groups to see the actual cultivars."
             )
-            for _, row in partial_matches.iterrows():
-                render_tree_card(row)
+
+            cols = st.columns(2)
+            for pos, (_, grow) in enumerate(group_table.iterrows()):
+                group = grow["sales_group"]
+                meta = GROUP_OVERVIEWS.get(group, GROUP_OVERVIEWS["Other"])
+                group_rows = visible_matches[visible_matches["sales_group"] == group]
+                hmin = int(group_rows["height_min"].min())
+                hmax = int(group_rows["height_max"].max())
+                wmin = int(group_rows["width_min"].min())
+                wmax = int(group_rows["width_max"].max())
+
+                with cols[pos % 2]:
+                    st.markdown('<div class="tree-card">', unsafe_allow_html=True)
+                    st.markdown(f"### {meta['label']}")
+                    st.write(meta["summary"])
+                    st.caption(meta["why"])
+                    st.markdown(f"**Typical range in current POC:** {hmin}–{hmax} ft tall · {wmin}–{wmax} ft wide")
+                    st.markdown(f"**Matches:** {int(grow['full_count'])} full · {int(grow['partial_count'])} partial")
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+            st.subheader("2. Choose Tree Types to Review")
+            selected_groups = st.multiselect(
+                "Which types does the customer want to see?",
+                options=available_groups,
+                default=[],
+                placeholder="Example: Serviceberry, Hydrangea Tree on Standard"
+            )
+
+            if not selected_groups:
+                st.info("Select one or more tree types above to drill down to cultivars.")
+            else:
+                st.subheader("3. Review Cultivars")
+                selected_rows = visible_matches[visible_matches["sales_group"].isin(selected_groups)].copy()
+                selected_rows["status_order"] = selected_rows["match_status"].map({"Full Match": 0, "Partial Match": 1})
+                selected_rows = selected_rows.sort_values(
+                    ["sales_group", "status_order", "rank_score"],
+                    ascending=[True, True, False]
+                )
+
+                for group in selected_groups:
+                    meta = GROUP_OVERVIEWS.get(group, GROUP_OVERVIEWS["Other"])
+                    st.markdown(f"## {meta['label']}")
+                    st.caption(meta["summary"])
+                    group_rows = selected_rows[selected_rows["sales_group"] == group]
+                    for _, row in group_rows.iterrows():
+                        render_tree_card(row)
 
 with right:
     st.subheader("Customer Criteria")
@@ -498,38 +660,26 @@ with right:
         st.write("• " + str(item))
 
     st.divider()
+    st.markdown("#### Sales flow")
+    st.caption("1) Enter criteria. 2) Review recommended tree types. 3) Select the types the customer likes. 4) Compare actual cultivars.")
+
+    st.divider()
     st.markdown("#### Mature size")
-    st.caption(
-        "The POC now distinguishes researched Michigan/regional mature-size values from starter estimates. "
-        "Verified values are used when available; remaining cultivars are flagged for verification."
-    )
-
-    st.divider()
-    st.markdown("#### Sales use")
-    st.caption(
-        "Start with Full Matches. Use Partial Matches when the customer may be willing to relax one requirement."
-    )
-
-    st.divider()
-    st.markdown("#### Michigan Native")
-    st.caption(
-        "Yes means the underlying tree species is originally native to Michigan. "
-        "Cultivars of a Michigan-native species retain Yes; hybrids or entries whose species varies are labeled separately."
-    )
+    st.caption("Verified Michigan/regional size values are used when available. Other entries remain starter estimates pending cultivar verification.")
 
     st.divider()
     st.markdown("#### Match logic")
     st.caption(
-        "Full Match means every selected requirement is met. Partial Match means some selected "
-        "requirements are met and the card identifies what does not match."
+        "Full Match means every selected requirement fully fits. "
+        "For height and width, May Fit means the lower end of the expected mature range is within the customer's limit "
+        "but the upper end exceeds it."
     )
 
     with st.expander("POC development notes"):
-        st.write("• Connect Wiegand's live tree/product inventory")
-        st.write("• Replace reference photos with approved Wiegand's or supplier photography")
-        st.write("• Add natural-language sales search")
-        st.write("• Connect selected trees to the landscape visualizer")
-
+        st.write("• Connect Wiegand's live cultivar/product inventory")
+        st.write("• Add approved Wiegand's or supplier photography")
+        st.write("• Let AI summarize why each tree type fits the customer's request")
+        st.write("• Pass selected cultivars into the landscape visualizer")
 
 st.divider()
 st.markdown(

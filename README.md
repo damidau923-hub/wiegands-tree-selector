@@ -1,18 +1,15 @@
-# Wiegand's Tree Sales Assistant — POC v12
+# Wiegand's Tree Sales Assistant — POC v14
 
-## Mature-size match logic
+## Fixes the broad-choice layer
 
-Height and width now use three states:
+v13 had an initialization bug: the app tried to assign `sales_group` before the grouping function was defined.
 
-- **Fits** — the entire expected mature range is within the customer's maximum.
-- **May Fit** — the lower end is within the customer's maximum, but the upper end exceeds it.
-- **Exceeds** — even the lower end exceeds the customer's maximum.
+v14 fixes that and also persists the Find Trees state across Streamlit reruns.
 
-Examples:
-- Customer max height 30 ft; tree 20–30 ft → Fits.
-- Customer max height 30 ft; tree 30–40 ft → May Fit and appears as a Partial Match.
-- Customer max height 30 ft; tree 35–45 ft → Exceeds for height.
+Expected flow:
+1. Enter criteria and tap **Find Trees**.
+2. See **Broad Choices That Fit the Customer** such as Serviceberry, Hydrangea Tree on Standard, Japanese Maple, Japanese Tree Lilac, Redbud, etc.
+3. Select one or more broad choices.
+4. Review the matching cultivars in those groups.
 
-The same logic applies to mature width.
-
-A Full Match still requires every selected criterion to fully fit. Borderline May Fit cases remain visible as useful Partial Matches.
+The Full Match / Partial Match / May Fit logic is unchanged.
