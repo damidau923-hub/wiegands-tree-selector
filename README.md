@@ -1,18 +1,7 @@
-# Acme Nursery Tree Sales Assistant — POC v21
+# Acme Nursery Tree Sales Assistant — POC v22
 
-## Fix in v21: Flowering is now a hard requirement
+## Change in v22
 
-When the salesperson chooses:
+**Other Recommended Trees** is now always displayed last in the broad-choice results.
 
-**Flowering tree? = Yes**
-
-the search pool is restricted to trees marked as flowering **before** Full Match / Partial Match logic is applied.
-
-Therefore:
-- non-flowering trees cannot appear as Partial Matches
-- broad-choice genera are built only from flowering candidates
-- Quick Comparison and detailed cards also contain only flowering candidates
-
-Likewise, choosing **No** restricts the search pool to non-flowering trees.
-
-The rest of the matching logic is unchanged.
+Specific named tree groups are shown first and continue to be ranked by match quality. The catch-all Other category is forced to the bottom regardless of its score.

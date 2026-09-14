@@ -615,7 +615,12 @@ def group_summary_table(matches_df):
         best_rank=("rank_score", "max")
     ).reset_index()
     g["total"] = g["full_count"] + g["partial_count"]
-    return g.sort_values(["full_count", "best_rank", "total"], ascending=[False, False, False])
+    # Always place the catch-all Other Recommended Trees group last.
+    g["other_last"] = g["sales_group"].eq("Other")
+    return g.sort_values(
+        ["other_last", "full_count", "best_rank", "total"],
+        ascending=[True, False, False, False]
+    ).drop(columns=["other_last"])
 
 with left:
     st.subheader("1. Broad Choices That Fit the Customer")
