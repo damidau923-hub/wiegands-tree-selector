@@ -250,26 +250,45 @@ def evaluate_match(row):
     checks = []
     misses = []
     matches = []
+    borderlines = []
 
     if max_height is not None:
-        ok = row["height_max"] <= max_height
-        checks.append(ok)
-        if ok:
-            matches.append(f"mature height stays at or below {max_height} ft")
-        else:
-            misses.append(
-                f"maximum mature height is {int(row['height_max'])} ft; your limit is {max_height} ft"
+        if row["height_max"] <= max_height:
+            ok = True
+            matches.append(
+                f"expected mature height {format_range(row['height_min'], row['height_max'])} fits the {max_height} ft limit"
             )
+        elif row["height_min"] <= max_height < row["height_max"]:
+            ok = False
+            borderlines.append(
+                f"height may fit: expected mature height is {format_range(row['height_min'], row['height_max'])}; "
+                f"customer maximum is {max_height} ft"
+            )
+        else:
+            ok = False
+            misses.append(
+                f"expected mature height starts at {int(row['height_min'])} ft, above the {max_height} ft limit"
+            )
+        checks.append(ok)
 
     if max_width is not None:
-        ok = row["width_max"] <= max_width
-        checks.append(ok)
-        if ok:
-            matches.append(f"mature width stays at or below {max_width} ft")
-        else:
-            misses.append(
-                f"maximum mature width is {int(row['width_max'])} ft; your limit is {max_width} ft"
+        if row["width_max"] <= max_width:
+            ok = True
+            matches.append(
+                f"expected mature width {format_range(row['width_min'], row['width_max'])} fits the {max_width} ft limit"
             )
+        elif row["width_min"] <= max_width < row["width_max"]:
+            ok = False
+            borderlines.append(
+                f"width may fit: expected mature width is {format_range(row['width_min'], row['width_max'])}; "
+                f"customer maximum is {max_width} ft"
+            )
+        else:
+            ok = False
+            misses.append(
+                f"expected mature width starts at {int(row['width_min'])} ft, above the {max_width} ft limit"
+            )
+        checks.append(ok)
 
     if flowering != "Either":
         ok = str(row["flowering"]) == flowering
@@ -293,13 +312,11 @@ def evaluate_match(row):
                 f"listed light needs are {str(row['sun_needs']).replace(';', ', ')}; you requested {sun}"
             )
 
-    # If the customer has not selected any optional criteria, every tree in the
-    # chosen category is a Full Match.
     if not checks:
         status = "Full Match"
-    elif all(checks):
+    elif all(checks) and not borderlines and not misses:
         status = "Full Match"
-    elif any(checks):
+    elif any(checks) or borderlines:
         status = "Partial Match"
     else:
         status = "No Match"
@@ -307,8 +324,6 @@ def evaluate_match(row):
     matched_count = sum(bool(x) for x in checks)
     total_count = len(checks)
 
-    # Ranking is separate from the match label.
-    # Partial matches with more satisfied requirements and smaller size misses rank higher.
     penalty = 0.0
     if max_height is not None and row["height_max"] > max_height:
         penalty += (row["height_max"] - max_height) / max(max_height, 1)
@@ -323,9 +338,10 @@ def evaluate_match(row):
         "match_status": status,
         "matched_count": matched_count,
         "criteria_count": total_count,
-        "match_reasons": "; ".join(matches) if matches else "No selected requirement is met",
+        "match_reasons": "; ".join(matches) if matches else "",
+        "borderline_reasons": "; ".join(borderlines),
         "miss_reasons": "; ".join(misses),
-        "rank_score": (matched_count * 100) + (wiegands_bonus * 5) - penalty,
+        "rank_score": (matched_count * 100) + (len(borderlines) * 50) + (wiegands_bonus * 5) - penalty,
     })
 
 if not candidates.empty:
@@ -424,15 +440,21 @@ def render_tree_card(row):
                 unsafe_allow_html=True
             )
         else:
-            if row["match_reasons"]:
+            if row.get("match_reasons", ""):
                 st.markdown(
-                    f'<div class="reason"><b>What matches:</b> {row["match_reasons"]}</div>',
+                    f'<div class="reason"><b>What fits:</b> {row["match_reasons"]}</div>',
                     unsafe_allow_html=True
                 )
-            st.markdown(
-                f'<div class="warning"><b>What does not match:</b> {row["miss_reasons"]}</div>',
-                unsafe_allow_html=True
-            )
+            if row.get("borderline_reasons", ""):
+                st.markdown(
+                    f'<div class="warning"><b>May fit:</b> {row["borderline_reasons"]}</div>',
+                    unsafe_allow_html=True
+                )
+            if row.get("miss_reasons", ""):
+                st.markdown(
+                    f'<div class="warning"><b>Exceeds / does not match:</b> {row["miss_reasons"]}</div>',
+                    unsafe_allow_html=True
+                )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
