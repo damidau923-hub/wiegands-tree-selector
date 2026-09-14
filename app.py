@@ -13,7 +13,31 @@ st.set_page_config(
 @st.cache_data
 def load_data():
     path = Path(__file__).with_name("tree_database.csv")
-    return pd.read_csv(path)
+    data = pd.read_csv(path)
+
+    # Defensive schema handling:
+    # if Streamlit/GitHub temporarily serves an older CSV, the app still runs.
+    defaults = {
+        "preferred_soil": "Not yet populated",
+        "fall_color": "Not yet populated",
+        "growth_rate": "Not yet populated",
+        "native_status": "Not yet populated",
+        "moisture_notes": "Not yet populated",
+        "info_source": "",
+        "info_source_url": "",
+        "image_source": "",
+        "image_source_url": "",
+        "photo_note": "",
+        "image_url": "",
+    }
+
+    for column, default in defaults.items():
+        if column not in data.columns:
+            data[column] = default
+        else:
+            data[column] = data[column].fillna(default)
+
+    return data
 
 df = load_data()
 

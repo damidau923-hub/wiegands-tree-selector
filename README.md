@@ -1,17 +1,23 @@
-# Wiegand's Michigan Tree Finder — POC v5
+# Wiegand's Michigan Tree Finder — POC v5.1
 
-## New in v5
-- Real representative tree photos from open-license/public-image sources where available.
-- Preferred soil.
-- Fall color.
-- Growth rate.
-- Native/non-native status.
-- Moisture preference/tolerance.
-- Horticultural source links.
-- Photo source links and a notice when a photo is representative of the species/type rather than the exact cultivar.
+## v5.1 reliability fix
+The app now checks the CSV schema when it starts.
 
-## Important POC note
-This is still a starter database. The horticultural profiles should be verified cultivar-by-cultivar once Wiegand's actual tree assortment is available. Wiegand's availability remains provisional.
+If GitHub or Streamlit temporarily serves an older tree_database.csv that does not yet contain:
+- preferred_soil
+- fall_color
+- growth_rate
+- native_status
+- moisture_notes
+- photo/source fields
 
-## Update the live app
-Upload the four files in this package to the existing GitHub repository and commit them. Streamlit should redeploy the same URL automatically.
+the app will fill safe placeholder values instead of crashing with a KeyError.
+
+## Recommended update
+Upload all four files from this package to the existing GitHub repository:
+- app.py
+- tree_database.csv
+- requirements.txt
+- README.md
+
+Then commit the changes. Streamlit should redeploy automatically.
