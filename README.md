@@ -1,23 +1,11 @@
-# Wiegand's Michigan Tree Finder — POC v5.1
+# Wiegand's Michigan Tree Finder — POC v6
 
-## v5.1 reliability fix
-The app now checks the CSV schema when it starts.
+## New in v6
+- Replaces ambiguous "Native status" display with **Michigan Native: Yes / No / Varies**.
+- Uses Michigan DNR's definition: native means a species originally native to Michigan.
+- Photo strategy now prioritizes the whole tree / mature habit rather than flower or leaf close-ups.
+- Photos are explicitly labeled representative when the exact cultivar is not verified.
+- For tree forms such as Hydrangea on Standard or Lilac on Standard, the POC prefers a blank/pending image over a misleading shrub or close-up photo.
 
-If GitHub or Streamlit temporarily serves an older tree_database.csv that does not yet contain:
-- preferred_soil
-- fall_color
-- growth_rate
-- native_status
-- moisture_notes
-- photo/source fields
-
-the app will fill safe placeholder values instead of crashing with a KeyError.
-
-## Recommended update
-Upload all four files from this package to the existing GitHub repository:
-- app.py
-- tree_database.csv
-- requirements.txt
-- README.md
-
-Then commit the changes. Streamlit should redeploy automatically.
+## Important
+Photo coverage remains a POC and should be verified image-by-image before public production use. Exact Wiegand's cultivar photography would be preferred in the final application.

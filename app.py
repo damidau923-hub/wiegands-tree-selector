@@ -22,6 +22,7 @@ def load_data():
         "fall_color": "Not yet populated",
         "growth_rate": "Not yet populated",
         "native_status": "Not yet populated",
+        "michigan_native": "Verify species",
         "moisture_notes": "Not yet populated",
         "info_source": "",
         "info_source_url": "",
@@ -324,7 +325,7 @@ with left:
                     st.image(image_url, use_container_width=True)
                 else:
                     st.markdown(
-                        f'<div class="photo-placeholder">Photo ready<br>{row["common_name"]}</div>',
+                        f'<div class="photo-placeholder">Whole-tree photo pending<br>{row["common_name"]}</div>',
                         unsafe_allow_html=True
                     )
 
@@ -357,7 +358,7 @@ with left:
                 with d1:
                     st.markdown(f"**Preferred soil:** {row['preferred_soil']}")
                     st.markdown(f"**Growth rate:** {row['growth_rate']}")
-                    st.markdown(f"**Native status:** {row['native_status']}")
+                    st.markdown(f"**Michigan Native:** {row['michigan_native']}")
                 with d2:
                     st.markdown(f"**Fall color:** {row['fall_color']}")
                     st.markdown(f"**Moisture:** {row['moisture_notes']}")
@@ -390,6 +391,13 @@ with right:
 
     for item in criteria:
         st.write("• " + str(item))
+
+    st.divider()
+    st.markdown("#### Michigan Native")
+    st.caption(
+        "Yes means the underlying tree species is originally native to Michigan. "
+        "Cultivars of a Michigan-native species retain Yes; hybrids or entries whose species varies are labeled separately."
+    )
 
     st.divider()
     st.markdown("#### Next POC upgrades")
