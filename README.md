@@ -1,20 +1,17 @@
-# Wiegand's Michigan Tree Finder — POC v3
+# Wiegand's Michigan Tree Finder — POC v5
 
-## v3 fix
-Sun exposure now uses overlapping horticultural ranges instead of exact text matching.
+## New in v5
+- Real representative tree photos from open-license/public-image sources where available.
+- Preferred soil.
+- Fall color.
+- Growth rate.
+- Native/non-native status.
+- Moisture preference/tolerance.
+- Horticultural source links.
+- Photo source links and a notice when a photo is representative of the species/type rather than the exact cultivar.
 
-Examples:
-- Partial Sun can match trees listed for Full Sun, Partial Sun, or Partial Shade.
-- Partial Shade can match trees listed for Partial Sun, Partial Shade, or Shade.
-- Shade remains more restrictive.
+## Important POC note
+This is still a starter database. The horticultural profiles should be verified cultivar-by-cultivar once Wiegand's actual tree assortment is available. Wiegand's availability remains provisional.
 
-This specifically fixes cases like Redbud returning no matches when the user chooses Partial Sun.
-
-## Update the live Streamlit app
-Replace the existing repository files with:
-- app.py
-- tree_database.csv
-- requirements.txt
-- README.md
-
-Commit the changes. Streamlit should redeploy the same app URL automatically.
+## Update the live app
+Upload the four files in this package to the existing GitHub repository and commit them. Streamlit should redeploy the same URL automatically.

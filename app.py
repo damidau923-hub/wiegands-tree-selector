@@ -168,6 +168,9 @@ filtered = df[df["michigan_suitable"].astype(str).str.lower().eq("yes")].copy()
 if tree_type != "Any":
     filtered = filtered[filtered["tree_type"] == tree_type]
 
+# Preserve the category candidate pool so we can explain trees excluded by size.
+category_candidates = filtered.copy()
+
 if max_height is not None:
     # Hard constraint: exclude anything whose stated mature maximum exceeds the user's max.
     filtered = filtered[filtered["height_max"] <= max_height]
@@ -242,6 +245,22 @@ if not filtered.empty:
 else:
     ranked = filtered
 
+# ---------- Explain size exclusions ----------
+size_exclusions = []
+if not category_candidates.empty and (max_height is not None or max_width is not None):
+    for _, candidate in category_candidates.iterrows():
+        reasons = []
+        if max_height is not None and candidate["height_max"] > max_height:
+            reasons.append(
+                f"mature height may reach {int(candidate['height_max'])} ft"
+            )
+        if max_width is not None and candidate["width_max"] > max_width:
+            reasons.append(
+                f"mature width may reach {int(candidate['width_max'])} ft"
+            )
+        if reasons:
+            size_exclusions.append((candidate["common_name"], " and ".join(reasons)))
+
 # ---------- Results ----------
 left, right = st.columns([2.3, 1], gap="large")
 
@@ -253,8 +272,23 @@ with left:
             "No trees in the current starter database satisfy all of those requirements. "
             "Try relaxing one constraint."
         )
+        if size_exclusions:
+            with st.expander("Trees excluded by mature-size limits"):
+                for name, reason in size_exclusions:
+                    st.write(f"• **{name}** — {reason}.")
     else:
         st.write(f"Showing **{len(ranked)}** recommendation(s) that satisfy the selected requirements.")
+
+        if size_exclusions:
+            count = len(size_exclusions)
+            noun = "tree was" if count == 1 else "trees were"
+            st.info(
+                f"**{count} additional {tree_type if tree_type != 'Any' else 'tree'} "
+                f"{'was' if count == 1 else 'were'} excluded by your mature-size limits.**"
+            )
+            with st.expander("See why"):
+                for name, reason in size_exclusions:
+                    st.write(f"• **{name}** — {reason}.")
 
         for _, row in ranked.iterrows():
             st.markdown('<div class="tree-card">', unsafe_allow_html=True)
@@ -295,10 +329,29 @@ with left:
                 st.write(row["description"])
                 st.markdown(f"**Sun:** {row['sun_needs'].replace(';', ', ')}")
 
+                d1, d2 = st.columns(2)
+                with d1:
+                    st.markdown(f"**Preferred soil:** {row['preferred_soil']}")
+                    st.markdown(f"**Growth rate:** {row['growth_rate']}")
+                    st.markdown(f"**Native status:** {row['native_status']}")
+                with d2:
+                    st.markdown(f"**Fall color:** {row['fall_color']}")
+                    st.markdown(f"**Moisture:** {row['moisture_notes']}")
+
                 st.markdown(
                     f'<div class="reason"><b>Why it matches:</b> {row["reasons"]}</div>',
                     unsafe_allow_html=True
                 )
+
+                source_bits = []
+                if isinstance(row.get("info_source_url"), str) and row.get("info_source_url"):
+                    source_bits.append(f"[Horticultural source]({row['info_source_url']})")
+                if isinstance(row.get("image_source_url"), str) and row.get("image_source_url"):
+                    source_bits.append(f"[Photo source]({row['image_source_url']})")
+                if source_bits:
+                    st.caption(" • ".join(source_bits))
+                if isinstance(row.get("photo_note"), str) and row.get("photo_note"):
+                    st.caption(row["photo_note"])
 
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -316,9 +369,9 @@ with right:
 
     st.divider()
     st.markdown("#### Next POC upgrades")
-    st.write("• Add real tree photographs")
+    st.write("• Expand photo coverage to every exact cultivar")
     st.write("• Connect Wiegand's actual tree list")
-    st.write("• Add growth rate, fall color, native status and soil/moisture preferences")
+    st.write("• Verify all cultivar-specific horticultural attributes against final Wiegand's assortment")
     st.write("• Add natural-language AI search")
     st.write("• Later connect recommendations to the landscape visualizer")
 
