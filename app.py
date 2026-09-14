@@ -29,6 +29,9 @@ def load_data():
         "image_source": "",
         "image_source_url": "",
         "photo_note": "",
+        "photo_source_priority": "University/arboretum preferred",
+        "photo_reference_type": "Targeted public reference",
+        "photo_fallback_url": "",
         "image_url": "",
     }
 
@@ -338,7 +341,7 @@ def render_tree_card(row):
             )
 
         if isinstance(row.get("image_source_url"), str) and row.get("image_source_url"):
-            st.link_button("View photo source", row["image_source_url"], use_container_width=True)
+            st.link_button("View public photo source", row["image_source_url"], use_container_width=True)
 
         if row["match_status"] == "Full Match":
             st.markdown(
@@ -413,6 +416,8 @@ def render_tree_card(row):
             st.caption(" • ".join(source_bits))
         if isinstance(row.get("photo_note"), str) and row.get("photo_note"):
             st.caption(row["photo_note"])
+        if isinstance(row.get("photo_reference_type"), str) and row.get("photo_reference_type"):
+            st.caption(f"Photo reference: {row['photo_reference_type']}")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -458,9 +463,10 @@ with right:
     st.divider()
     st.markdown("#### Photo policy")
     st.caption(
-        "POC photos come from reusable reference sources such as Wikimedia Commons. "
-        "We prioritize the exact cultivar and whole-tree habit. Representative species photos "
-        "are labeled, and they can later be replaced with Wiegand's photography."
+        "POC photo sourcing now prioritizes university and arboretum collections, especially "
+        "NC State Plant Toolbox and JC Raulston Arboretum. Exact-cultivar and whole-tree images "
+        "are preferred; Wikimedia Commons is retained only as a fallback. Wiegand's own approved "
+        "photography can replace these references later."
     )
 
     st.divider()
