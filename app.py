@@ -178,10 +178,21 @@ if max_width is not None:
 if flowering != "Either":
     filtered = filtered[filtered["flowering"] == flowering]
 
+SUN_COMPATIBILITY = {
+    "Full Sun": {"Full Sun"},
+    "Partial Sun": {"Full Sun", "Partial Sun", "Partial Shade"},
+    "Partial Shade": {"Partial Sun", "Partial Shade", "Shade"},
+    "Shade": {"Shade", "Partial Shade"},
+}
+
 if sun != "Either":
+    acceptable = SUN_COMPATIBILITY[sun]
     filtered = filtered[
         filtered["sun_needs"].astype(str).apply(
-            lambda x: sun in [s.strip() for s in x.split(";")]
+            lambda x: any(
+                option in acceptable
+                for option in [s.strip() for s in x.split(";")]
+            )
         )
     ]
 
@@ -208,7 +219,7 @@ def rank_row(row):
 
     if sun != "Either":
         score += 5
-        reasons.append(f"is suitable for {sun.lower()}")
+        reasons.append(f"fits the requested {sun.lower()} light conditions")
 
     bonus = 0
     if prioritize_wiegands and "Priority candidate" in str(row["wiegands_status"]):
@@ -310,6 +321,14 @@ with right:
     st.write("• Add growth rate, fall color, native status and soil/moisture preferences")
     st.write("• Add natural-language AI search")
     st.write("• Later connect recommendations to the landscape visualizer")
+
+    st.divider()
+    st.markdown("#### Light matching")
+    st.caption(
+        "The POC now treats sun exposure as overlapping ranges. "
+        "For example, Partial Sun can match trees listed for Full Sun, "
+        "Partial Sun, or Partial Shade."
+    )
 
 st.divider()
 st.markdown(

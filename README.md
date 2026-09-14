@@ -1,21 +1,20 @@
-# Wiegand's Michigan Tree Finder — POC v2
+# Wiegand's Michigan Tree Finder — POC v3
 
-## Improvements in v2
-- Cleaner Wiegand's-style interface.
-- Hard maximum-height filter.
-- Hard maximum-width filter.
-- Tree type, flowering, and sun filters act as real requirements.
-- Recommendation cards are ready for real photo URLs.
-- Separate categories remain for Hydrangea on Standard and Lilac on Standard.
-- Wiegand's priority status is only a ranking tie-breaker, not a fake availability claim.
+## v3 fix
+Sun exposure now uses overlapping horticultural ranges instead of exact text matching.
 
-## To update the live Streamlit app
-Replace these files in the same GitHub repository:
+Examples:
+- Partial Sun can match trees listed for Full Sun, Partial Sun, or Partial Shade.
+- Partial Shade can match trees listed for Partial Sun, Partial Shade, or Shade.
+- Shade remains more restrictive.
+
+This specifically fixes cases like Redbud returning no matches when the user chooses Partial Sun.
+
+## Update the live Streamlit app
+Replace the existing repository files with:
 - app.py
 - tree_database.csv
 - requirements.txt
+- README.md
 
-Commit the changes. Streamlit should automatically redeploy the same app URL.
-
-## Next major step
-Connect the actual Wiegand's tree product list and populate the image_url column with approved product/tree photographs.
+Commit the changes. Streamlit should redeploy the same app URL automatically.
