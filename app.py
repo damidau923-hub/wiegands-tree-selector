@@ -329,7 +329,7 @@ with st.sidebar:
     else:
         max_width = None
 
-    flowering = st.selectbox("Flowering", ["Either", "Yes", "No"])
+    flowering = st.selectbox("Flowering tree?", ["Either", "Yes", "No"])
     sun = st.selectbox(
         "Sun needs",
         ["Either", "Full Sun", "Partial Sun", "Partial Shade", "Shade"]
@@ -360,10 +360,21 @@ with st.sidebar:
     )
 
 # ---------- Match evaluation ----------
-# Michigan suitability and an explicitly selected tree type define the search pool.
+# Michigan suitability, an explicitly selected tree type, and an explicit
+# flowering choice define the hard search pool.
 candidates = df[df["michigan_suitable"].astype(str).str.lower().eq("yes")].copy()
+
 if tree_type != "Any":
     candidates = candidates[candidates["tree_type"] == tree_type]
+
+# Flowering is a hard customer requirement when selected.
+# This prevents a non-flowering tree from appearing as a Partial Match
+# when the customer specifically requests a flowering tree.
+if flowering != "Either":
+    candidates = candidates[
+        candidates["flowering"].astype(str).str.strip().str.lower()
+        == flowering.strip().lower()
+    ]
 
 SUN_MATCH = {
     "Full Sun": {
@@ -429,14 +440,10 @@ def evaluate_match(row):
         checks.append(ok)
 
     if flowering != "Either":
-        ok = str(row["flowering"]) == flowering
+        # Flowering has already been enforced as a hard search-pool requirement.
+        ok = True
         checks.append(ok)
-        if ok:
-            matches.append(f"flowering preference matches ({flowering})")
-        else:
-            misses.append(
-                f"flowering is {row['flowering']}; you requested {flowering}"
-            )
+        matches.append(f"flowering requirement matches ({flowering})")
 
     if sun != "Either":
         tree_sun = {s.strip() for s in str(row["sun_needs"]).split(";") if s.strip()}
@@ -619,7 +626,7 @@ with left:
         visible_matches = evaluated[evaluated["match_status"].isin(["Full Match", "Partial Match"])].copy()
 
         if visible_matches.empty:
-            st.warning("No tree types meet or partially meet the selected criteria.")
+            st.warning("No tree types meet or partially meet the selected criteria. Try adjusting one of the customer requirements.")
         else:
             group_table = group_summary_table(visible_matches)
             available_groups = group_table["sales_group"].tolist()

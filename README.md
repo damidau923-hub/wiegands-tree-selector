@@ -1,13 +1,18 @@
-# Acme Nursery Tree Sales Assistant — POC v20
+# Acme Nursery Tree Sales Assistant — POC v21
 
-## New in v20: Tree form
+## Fix in v21: Flowering is now a hard requirement
 
-A new **Form** field is included in the database, Quick Comparison table, and detailed cultivar cards.
+When the salesperson chooses:
 
-Values currently used:
-- **Tree Form**
-- **Tree Form or Multi-Stem**
+**Flowering tree? = Yes**
 
-The POC uses conservative defaults. Plants explicitly described as "on Standard" or "Tree Form" remain Tree Form. Selected species commonly offered in both forms are marked Tree Form or Multi-Stem.
+the search pool is restricted to trees marked as flowering **before** Full Match / Partial Match logic is applied.
 
-This field describes how the plant may be offered and is separate from future live inventory availability.
+Therefore:
+- non-flowering trees cannot appear as Partial Matches
+- broad-choice genera are built only from flowering candidates
+- Quick Comparison and detailed cards also contain only flowering candidates
+
+Likewise, choosing **No** restricts the search pool to non-flowering trees.
+
+The rest of the matching logic is unchanged.
