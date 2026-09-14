@@ -1,24 +1,22 @@
-# Wiegand's Tree Sales Assistant — POC v16
+# Wiegand's Tree Sales Assistant — POC v17
 
-## New: Quick Comparison table
+## New: Select cultivars from Quick Comparison
 
-After the salesperson selects one or more broad tree choices, the app now shows a quick comparison table before the detailed cultivar cards.
+The Quick Comparison table now includes a checkbox column labeled **Show Details**.
 
-Columns:
-- Tree / Cultivar
+Workflow:
+1. Enter customer criteria
+2. Review broad tree choices
+3. Select tree types to explore
+4. Compare cultivars in the Quick Comparison table
+5. Check the cultivars the customer wants to review
+6. Only those checked cultivars appear in the detailed review section
+
+The table still shows:
 - Match
 - Mature Height
 - Mature Width
 - Flowers
 - Fall Color
-
-Full Matches appear first, followed by Partial Matches.
-
-Updated sales flow:
-1. Enter customer criteria
-2. Review broad tree choices
-3. Select the tree types the customer wants to explore
-4. Compare matching cultivars in the Quick Comparison table
-5. Review detailed cultivar cards
 
 The existing Full Match / Partial Match / May Fit logic is unchanged.

@@ -651,6 +651,7 @@ with left:
                 )
 
                 comparison = selected_rows.copy()
+                comparison["Select"] = False
                 comparison["Tree / Cultivar"] = comparison["common_name"]
                 comparison["Match"] = comparison["match_status"]
                 comparison["Height"] = comparison.apply(
@@ -665,14 +666,22 @@ with left:
                 comparison["Fall Color"] = comparison["fall_color"].fillna("Not specified")
 
                 comparison = comparison[
-                    ["Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color"]
+                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color"]
                 ]
 
-                st.dataframe(
+                edited_comparison = st.data_editor(
                     comparison,
                     hide_index=True,
                     use_container_width=True,
+                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color"],
                     column_config={
+                        "Select": st.column_config.CheckboxColumn(
+                            "Show Details",
+                            help="Check the cultivars you want to review in detail below.",
+                            default=False,
+                            width="small",
+                        ),
+                        "id": None,
                         "Tree / Cultivar": st.column_config.TextColumn("Tree / Cultivar", width="large"),
                         "Match": st.column_config.TextColumn("Match", width="medium"),
                         "Height": st.column_config.TextColumn("Mature Height", width="medium"),
@@ -680,18 +689,31 @@ with left:
                         "Flowers": st.column_config.TextColumn("Flowers", width="small"),
                         "Fall Color": st.column_config.TextColumn("Fall Color", width="medium"),
                     },
+                    key="quick_comparison_editor",
                 )
 
-                st.subheader("4. Review Cultivars")
-                st.caption("Open the detailed cards below when the customer wants more information.")
+                selected_ids = edited_comparison.loc[
+                    edited_comparison["Select"] == True, "id"
+                ].tolist()
 
-                for group in selected_groups:
-                    meta = GROUP_OVERVIEWS.get(group, GROUP_OVERVIEWS["Other"])
-                    st.markdown(f"## {meta['label']}")
-                    st.caption(meta["summary"])
-                    group_rows = selected_rows[selected_rows["sales_group"] == group]
-                    for _, row in group_rows.iterrows():
-                        render_tree_card(row)
+                st.subheader("4. Review Selected Cultivars")
+
+                if not selected_ids:
+                    st.info("Check one or more cultivars in the Quick Comparison table to display their detailed cards.")
+                else:
+                    detail_rows = selected_rows[selected_rows["id"].isin(selected_ids)].copy()
+
+                    for group in selected_groups:
+                        group_rows = detail_rows[detail_rows["sales_group"] == group]
+                        if group_rows.empty:
+                            continue
+
+                        meta = GROUP_OVERVIEWS.get(group, GROUP_OVERVIEWS["Other"])
+                        st.markdown(f"## {meta['label']}")
+                        st.caption(meta["summary"])
+
+                        for _, row in group_rows.iterrows():
+                            render_tree_card(row)
 
 with right:
     st.subheader("Customer Criteria")
@@ -707,7 +729,7 @@ with right:
 
     st.divider()
     st.markdown("#### Sales flow")
-    st.caption("1) Enter criteria. 2) Review broad choices. 3) Select the types the customer likes. 4) Compare cultivars in the quick table. 5) Review detailed cultivar cards.")
+    st.caption("1) Enter criteria. 2) Review broad choices. 3) Select the types the customer likes. 4) Compare cultivars and check the ones to review. 5) Review only the selected detailed cultivar cards.")
 
     st.divider()
     st.markdown("#### Mature size")
