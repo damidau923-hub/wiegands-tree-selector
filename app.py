@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 
 st.set_page_config(
-    page_title="Wiegand's Tree Sales Assistant",
+    page_title="Acme Nursery Tree Sales Assistant",
     page_icon="🌳",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -302,7 +302,7 @@ button, [data-testid="stBaseButton-secondary"], [data-testid="stBaseButton-prima
 # ---------- Hero ----------
 st.markdown("""
 <div class="hero">
-  <div class="hero-title">Wiegand's Tree Sales Assistant</div>
+  <div class="hero-title">Acme Nursery Tree Sales Assistant</div>
   <div class="hero-sub">
     Guide a customer from site criteria to recommended tree types, then drill down to the actual cultivars.
   </div>
@@ -335,7 +335,7 @@ with st.sidebar:
     )
 
     prioritize_wiegands = st.checkbox(
-        "Prioritize Wiegand's priority candidates",
+        "Prioritize Acme Nursery priority candidates",
         value=True
     )
 
@@ -355,7 +355,7 @@ with st.sidebar:
 
     st.divider()
     st.caption(
-        "Sales POC: product availability is provisional until Wiegand's live inventory is connected."
+        "Sales POC: product availability is provisional until Acme Nursery live inventory is connected."
     )
 
 # ---------- Match evaluation ----------
@@ -744,8 +744,8 @@ with right:
     )
 
     with st.expander("POC development notes"):
-        st.write("• Connect Wiegand's live cultivar/product inventory")
-        st.write("• Add approved Wiegand's or supplier photography")
+        st.write("• Connect live nursery cultivar/product inventory")
+        st.write("• Add approved nursery or supplier photography")
         st.write("• Let AI summarize why each tree type fits the customer's request")
         st.write("• Pass selected cultivars into the landscape visualizer")
 
@@ -753,7 +753,7 @@ st.divider()
 st.markdown(
     '<div class="small-note">'
     'POC architecture: tree data is stored separately in tree_database.csv. '
-    'That lets Wiegand’s replace or expand the tree list without rebuilding the web interface.'
+    'That lets Acme Nursery replace or expand the tree list without rebuilding the web interface.'
     '</div>',
     unsafe_allow_html=True
 )
