@@ -1,28 +1,21 @@
-# Wiegand's Michigan Tree Finder — POC
+# Wiegand's Michigan Tree Finder — POC v2
 
-This is a small Streamlit proof of concept.
+## Improvements in v2
+- Cleaner Wiegand's-style interface.
+- Hard maximum-height filter.
+- Hard maximum-width filter.
+- Tree type, flowering, and sun filters act as real requirements.
+- Recommendation cards are ready for real photo URLs.
+- Separate categories remain for Hydrangea on Standard and Lilac on Standard.
+- Wiegand's priority status is only a ranking tie-breaker, not a fake availability claim.
 
-## What it does
-- Lets a user choose tree type, mature height, mature width, flowering preference, and sun needs.
-- Ranks the best matches from a starter Michigan tree database.
-- Shows a match percentage and explains why each recommendation fits.
-- Separates the data (`tree_database.csv`) from the application (`app.py`).
-- Includes separate categories for **Hydrangea on Standard** and **Lilac on Standard**.
-- Includes a rule-based natural-language request helper as a placeholder for a future AI parser.
+## To update the live Streamlit app
+Replace these files in the same GitHub repository:
+- app.py
+- tree_database.csv
+- requirements.txt
 
-## Run locally
-1. Install Python 3.10 or newer.
-2. In this folder, run:
-   `pip install -r requirements.txt`
-3. Start the app:
-   `streamlit run app.py`
+Commit the changes. Streamlit should automatically redeploy the same app URL.
 
-## Deploy
-These same files can be deployed to Streamlit Community Cloud or another Python web host.
-
-## Next steps
-- Replace provisional Wiegand's availability with the actual Wiegand's tree product database.
-- Add real tree photos/image URLs.
-- Add more cultivars and attributes.
-- Connect a true AI parser for natural-language requests.
-- Later connect to live inventory and/or the landscape designer.
+## Next major step
+Connect the actual Wiegand's tree product list and populate the image_url column with approved product/tree photographs.
