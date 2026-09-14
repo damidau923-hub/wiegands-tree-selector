@@ -32,6 +32,10 @@ def load_data():
         "photo_source_priority": "University/arboretum preferred",
         "photo_reference_type": "Targeted public reference",
         "photo_fallback_url": "",
+        "size_basis": "Starter range — cultivar verification pending",
+        "size_confidence": "Needs verification",
+        "size_source_name": "",
+        "size_source_url": "",
         "image_url": "",
     }
 
@@ -387,14 +391,19 @@ def render_tree_card(row):
 
         m1, m2, m3 = st.columns(3)
         with m1:
-            st.markdown("**Mature Height**")
+            st.markdown("**Expected Mature Height**")
             st.write(format_range(row["height_min"], row["height_max"]))
         with m2:
-            st.markdown("**Mature Width**")
+            st.markdown("**Expected Mature Width**")
             st.write(format_range(row["width_min"], row["width_max"]))
         with m3:
             st.markdown("**Flowers**")
             st.write(row["flowering"])
+
+        if row.get("size_confidence") == "Verified":
+            st.caption(f"Size basis: {row.get('size_basis', 'Michigan/regional reference')}")
+        else:
+            st.caption("Size basis: starter estimate — exact cultivar/Michigan verification pending")
 
         st.write(row["description"])
         st.markdown(f"**Sun:** {row['sun_needs'].replace(';', ', ')}")
@@ -465,6 +474,13 @@ with right:
     ]
     for item in criteria:
         st.write("• " + str(item))
+
+    st.divider()
+    st.markdown("#### Mature size")
+    st.caption(
+        "The POC now distinguishes researched Michigan/regional mature-size values from starter estimates. "
+        "Verified values are used when available; remaining cultivars are flagged for verification."
+    )
 
     st.divider()
     st.markdown("#### Sales use")
