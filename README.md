@@ -1,7 +1,14 @@
-# Acme Nursery Tree Sales Assistant — POC v22
+# Acme Nursery Tree Sales Assistant — POC v23
 
-## Change in v22
+## Change in v23
 
-**Other Recommended Trees** is now always displayed last in the broad-choice results.
+Under **Sun Needs**, **Either** has been renamed to **Any**.
 
-Specific named tree groups are shown first and continue to be ranked by match quality. The catch-all Other category is forced to the bottom regardless of its score.
+Choices:
+- Any
+- Full Sun
+- Partial Sun
+- Partial Shade
+- Shade
+
+**Any** means sunlight is not used as a matching requirement. Selecting a specific exposure still uses the Preferred / Tolerated / Unsuitable matching logic.

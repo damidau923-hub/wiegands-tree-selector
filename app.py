@@ -332,7 +332,7 @@ with st.sidebar:
     flowering = st.selectbox("Flowering tree?", ["Either", "Yes", "No"])
     sun = st.selectbox(
         "Sun needs",
-        ["Either", "Full Sun", "Partial Sun", "Partial Shade", "Shade"]
+        ["Any", "Full Sun", "Partial Sun", "Partial Shade", "Shade"]
     )
 
     prioritize_wiegands = st.checkbox(
@@ -445,7 +445,7 @@ def evaluate_match(row):
         checks.append(ok)
         matches.append(f"flowering requirement matches ({flowering})")
 
-    if sun != "Either":
+    if sun != "Any":
         tree_sun = {s.strip() for s in str(row["sun_needs"]).split(";") if s.strip()}
         preferred = SUN_MATCH.get(sun, {}).get("preferred", set())
         tolerated = SUN_MATCH.get(sun, {}).get("tolerated", set())
