@@ -1,15 +1,11 @@
-# Wiegand's Tree Sales Assistant — POC v14
+# Wiegand's Tree Sales Assistant — POC v15
 
-## Fixes the broad-choice layer
+## Fixes the broad-choice crash
 
-v13 had an initialization bug: the app tried to assign `sales_group` before the grouping function was defined.
+The v14 broad-choice screen accidentally read from the pre-evaluation `candidates` table. Match fields such as `match_status` exist only after candidates are evaluated.
 
-v14 fixes that and also persists the Find Trees state across Streamlit reruns.
-
-Expected flow:
-1. Enter criteria and tap **Find Trees**.
-2. See **Broad Choices That Fit the Customer** such as Serviceberry, Hydrangea Tree on Standard, Japanese Maple, Japanese Tree Lilac, Redbud, etc.
-3. Select one or more broad choices.
-4. Review the matching cultivars in those groups.
-
-The Full Match / Partial Match / May Fit logic is unchanged.
+v15 now:
+- builds match results in `evaluated`;
+- reads broad choices from `evaluated`;
+- keeps the required match columns even when a search returns zero candidates;
+- retains the criteria → broad choices → cultivar review workflow.

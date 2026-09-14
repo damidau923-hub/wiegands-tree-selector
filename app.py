@@ -472,7 +472,14 @@ def evaluate_match(row):
 if not candidates.empty:
     evaluated = pd.concat([candidates, candidates.apply(evaluate_match, axis=1)], axis=1)
 else:
+    # Preserve the result schema even when no candidates survive the initial filters.
     evaluated = candidates.copy()
+    for col in [
+        "match_status", "matched_count", "criteria_count", "match_reasons",
+        "borderline_reasons", "miss_reasons", "rank_score"
+    ]:
+        if col not in evaluated.columns:
+            evaluated[col] = pd.Series(dtype="object")
 
 if not evaluated.empty:
     full_matches = evaluated[evaluated["match_status"] == "Full Match"].copy()
@@ -588,7 +595,7 @@ with left:
     if not find_trees:
         st.info("Choose the customer's criteria, then tap **Find Trees**.")
     else:
-        visible_matches = candidates[candidates["match_status"].isin(["Full Match", "Partial Match"])].copy()
+        visible_matches = evaluated[evaluated["match_status"].isin(["Full Match", "Partial Match"])].copy()
 
         if visible_matches.empty:
             st.warning("No tree types meet or partially meet the selected criteria.")
