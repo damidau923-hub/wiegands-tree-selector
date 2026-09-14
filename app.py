@@ -179,7 +179,7 @@ with st.sidebar:
         value=True
     )
 
-    result_count = st.slider("Number of recommendations", 3, 10, 5)
+    result_count = st.slider("Results per section", 3, 10, 5)
 
     st.divider()
     st.caption(
@@ -187,24 +187,11 @@ with st.sidebar:
         "Wiegand's product database is connected."
     )
 
-# ---------- Hard filters ----------
-filtered = df[df["michigan_suitable"].astype(str).str.lower().eq("yes")].copy()
-
+# ---------- Match evaluation ----------
+# Michigan suitability and an explicitly selected tree type define the search pool.
+candidates = df[df["michigan_suitable"].astype(str).str.lower().eq("yes")].copy()
 if tree_type != "Any":
-    filtered = filtered[filtered["tree_type"] == tree_type]
-
-# Preserve the category candidate pool so we can explain trees excluded by size.
-category_candidates = filtered.copy()
-
-if max_height is not None:
-    # Hard constraint: exclude anything whose stated mature maximum exceeds the user's max.
-    filtered = filtered[filtered["height_max"] <= max_height]
-
-if max_width is not None:
-    filtered = filtered[filtered["width_max"] <= max_width]
-
-if flowering != "Either":
-    filtered = filtered[filtered["flowering"] == flowering]
+    candidates = candidates[candidates["tree_type"] == tree_type]
 
 SUN_COMPATIBILITY = {
     "Full Sun": {"Full Sun"},
@@ -213,175 +200,224 @@ SUN_COMPATIBILITY = {
     "Shade": {"Shade", "Partial Shade"},
 }
 
-if sun != "Either":
-    acceptable = SUN_COMPATIBILITY[sun]
-    filtered = filtered[
-        filtered["sun_needs"].astype(str).apply(
-            lambda x: any(
-                option in acceptable
-                for option in [s.strip() for s in x.split(";")]
-            )
-        )
-    ]
-
-# ---------- Ranking ----------
-def rank_row(row):
-    score = 50
-    reasons = []
-
-    if tree_type != "Any":
-        score += 20
-        reasons.append(f"matches the requested {tree_type} category")
+def evaluate_match(row):
+    checks = []
+    misses = []
+    matches = []
 
     if max_height is not None:
-        score += 10
-        reasons.append(f"stays at or below {max_height} ft mature height")
+        ok = row["height_max"] <= max_height
+        checks.append(ok)
+        if ok:
+            matches.append(f"mature height stays at or below {max_height} ft")
+        else:
+            misses.append(
+                f"mature height may reach {int(row['height_max'])} ft; your maximum is {max_height} ft"
+            )
 
     if max_width is not None:
-        score += 10
-        reasons.append(f"stays at or below {max_width} ft mature width")
+        ok = row["width_max"] <= max_width
+        checks.append(ok)
+        if ok:
+            matches.append(f"mature width stays at or below {max_width} ft")
+        else:
+            misses.append(
+                f"mature width may reach {int(row['width_max'])} ft; your maximum is {max_width} ft"
+            )
 
     if flowering != "Either":
-        score += 5
-        reasons.append("matches the flowering preference")
+        ok = str(row["flowering"]) == flowering
+        checks.append(ok)
+        if ok:
+            matches.append(f"flowering preference matches ({flowering})")
+        else:
+            misses.append(
+                f"flowering is {row['flowering']}; you requested {flowering}"
+            )
 
     if sun != "Either":
-        score += 5
-        reasons.append(f"fits the requested {sun.lower()} light conditions")
+        acceptable = SUN_COMPATIBILITY[sun]
+        plant_sun = [s.strip() for s in str(row["sun_needs"]).split(";")]
+        ok = any(option in acceptable for option in plant_sun)
+        checks.append(ok)
+        if ok:
+            matches.append(f"fits the requested {sun.lower()} conditions")
+        else:
+            misses.append(
+                f"listed light needs are {str(row['sun_needs']).replace(';', ', ')}; you requested {sun}"
+            )
 
-    bonus = 0
-    if prioritize_wiegands and "Priority candidate" in str(row["wiegands_status"]):
-        bonus = 3
-        reasons.append("is flagged as a Wiegand's priority candidate in the POC")
+    # If the customer has not selected any optional criteria, every tree in the
+    # chosen category is a Full Match.
+    if not checks:
+        status = "Full Match"
+    elif all(checks):
+        status = "Full Match"
+    elif any(checks):
+        status = "Partial Match"
+    else:
+        status = "No Match"
 
-    # Displayed match should not exceed 100.
-    match = min(score, 100)
+    matched_count = sum(bool(x) for x in checks)
+    total_count = len(checks)
+
+    # Ranking is separate from the match label.
+    # Partial matches with more satisfied requirements and smaller size misses rank higher.
+    penalty = 0.0
+    if max_height is not None and row["height_max"] > max_height:
+        penalty += (row["height_max"] - max_height) / max(max_height, 1)
+    if max_width is not None and row["width_max"] > max_width:
+        penalty += (row["width_max"] - max_width) / max(max_width, 1)
+
+    wiegands_bonus = 1 if (
+        prioritize_wiegands and "Priority candidate" in str(row["wiegands_status"])
+    ) else 0
+
     return pd.Series({
-        "match_pct": match,
-        "sort_score": score + bonus,
-        "reasons": "; ".join(reasons) if reasons else "Michigan-suitable option from the starter database"
+        "match_status": status,
+        "matched_count": matched_count,
+        "criteria_count": total_count,
+        "match_reasons": "; ".join(matches) if matches else "No selected requirement is met",
+        "miss_reasons": "; ".join(misses),
+        "rank_score": (matched_count * 100) + (wiegands_bonus * 5) - penalty,
     })
 
-if not filtered.empty:
-    ranked = filtered.copy()
-    ranked = pd.concat([ranked, ranked.apply(rank_row, axis=1)], axis=1)
-    ranked = ranked.sort_values(["sort_score", "common_name"], ascending=[False, True])
-    ranked = ranked.head(result_count)
+if not candidates.empty:
+    evaluated = pd.concat([candidates, candidates.apply(evaluate_match, axis=1)], axis=1)
 else:
-    ranked = filtered
+    evaluated = candidates.copy()
 
-# ---------- Explain size exclusions ----------
-size_exclusions = []
-if not category_candidates.empty and (max_height is not None or max_width is not None):
-    for _, candidate in category_candidates.iterrows():
-        reasons = []
-        if max_height is not None and candidate["height_max"] > max_height:
-            reasons.append(
-                f"mature height may reach {int(candidate['height_max'])} ft"
-            )
-        if max_width is not None and candidate["width_max"] > max_width:
-            reasons.append(
-                f"mature width may reach {int(candidate['width_max'])} ft"
-            )
-        if reasons:
-            size_exclusions.append((candidate["common_name"], " and ".join(reasons)))
+if not evaluated.empty:
+    full_matches = evaluated[evaluated["match_status"] == "Full Match"].copy()
+    partial_matches = evaluated[evaluated["match_status"] == "Partial Match"].copy()
+
+    full_matches = full_matches.sort_values(
+        ["rank_score", "common_name"], ascending=[False, True]
+    ).head(result_count)
+
+    partial_matches = partial_matches.sort_values(
+        ["rank_score", "common_name"], ascending=[False, True]
+    ).head(result_count)
+else:
+    full_matches = evaluated
+    partial_matches = evaluated
 
 # ---------- Results ----------
 left, right = st.columns([2.3, 1], gap="large")
 
+def render_tree_card(row):
+    st.markdown('<div class="tree-card">', unsafe_allow_html=True)
+    c1, c2 = st.columns([1, 2.15], gap="large")
+
+    with c1:
+        image_url = row.get("image_url", "")
+        if isinstance(image_url, str) and image_url.strip():
+            st.image(image_url, use_container_width=True)
+        else:
+            st.markdown(
+                f'<div class="photo-placeholder">Whole-tree photo pending<br>{row["common_name"]}</div>',
+                unsafe_allow_html=True
+            )
+
+        if isinstance(row.get("image_source_url"), str) and row.get("image_source_url"):
+            st.link_button("View photo source", row["image_source_url"], use_container_width=True)
+
+        if row["match_status"] == "Full Match":
+            st.markdown(
+                '<div class="match-pill">FULL MATCH</div>',
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                '<div class="status-pill"><b>PARTIAL MATCH</b></div>',
+                unsafe_allow_html=True
+            )
+
+        st.markdown(
+            f'<div class="status-pill">{row["wiegands_status"]}</div>',
+            unsafe_allow_html=True
+        )
+
+    with c2:
+        st.markdown(f"### {row['common_name']}")
+        st.markdown(f"*{row['botanical_name']}*")
+        st.markdown(
+            f'<div class="meta">{row["tree_type"]}</div>',
+            unsafe_allow_html=True
+        )
+
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Height", f"{int(row['height_min'])}–{int(row['height_max'])} ft")
+        m2.metric("Width", f"{int(row['width_min'])}–{int(row['width_max'])} ft")
+        m3.metric("Flowers", row["flowering"])
+
+        st.write(row["description"])
+        st.markdown(f"**Sun:** {row['sun_needs'].replace(';', ', ')}")
+
+        d1, d2 = st.columns(2)
+        with d1:
+            st.markdown(f"**Preferred soil:** {row['preferred_soil']}")
+            st.markdown(f"**Growth rate:** {row['growth_rate']}")
+            st.markdown(f"**Michigan Native:** {row['michigan_native']}")
+        with d2:
+            st.markdown(f"**Fall color:** {row['fall_color']}")
+            st.markdown(f"**Moisture:** {row['moisture_notes']}")
+
+        if row["match_status"] == "Full Match":
+            text = row["match_reasons"] or "Meets all selected requirements."
+            st.markdown(
+                f'<div class="reason"><b>Why it is a Full Match:</b> {text}</div>',
+                unsafe_allow_html=True
+            )
+        else:
+            if row["match_reasons"]:
+                st.markdown(
+                    f'<div class="reason"><b>What matches:</b> {row["match_reasons"]}</div>',
+                    unsafe_allow_html=True
+                )
+            st.markdown(
+                f'<div class="warning"><b>What does not match:</b> {row["miss_reasons"]}</div>',
+                unsafe_allow_html=True
+            )
+
+        source_bits = []
+        if isinstance(row.get("info_source_url"), str) and row.get("info_source_url"):
+            source_bits.append(f"[Horticultural source]({row['info_source_url']})")
+        if isinstance(row.get("image_source_url"), str) and row.get("image_source_url"):
+            source_bits.append(f"[Photo source]({row['image_source_url']})")
+        if source_bits:
+            st.caption(" • ".join(source_bits))
+        if isinstance(row.get("photo_note"), str) and row.get("photo_note"):
+            st.caption(row["photo_note"])
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
 with left:
     st.subheader("Recommended Trees")
 
-    if ranked.empty:
-        st.warning(
-            "No trees in the current starter database satisfy all of those requirements. "
-            "Try relaxing one constraint."
-        )
-        if size_exclusions:
-            with st.expander("Trees excluded by mature-size limits"):
-                for name, reason in size_exclusions:
-                    st.write(f"• **{name}** — {reason}.")
+    if candidates.empty:
+        st.warning("No Michigan-suitable trees are available in the selected tree category.")
     else:
-        st.write(f"Showing **{len(ranked)}** recommendation(s) that satisfy the selected requirements.")
-
-        if size_exclusions:
-            count = len(size_exclusions)
-            noun = "tree was" if count == 1 else "trees were"
-            st.info(
-                f"**{count} additional {tree_type if tree_type != 'Any' else 'tree'} "
-                f"{'was' if count == 1 else 'were'} excluded by your mature-size limits.**"
+        st.markdown("### Full Matches")
+        if full_matches.empty:
+            st.info("No trees meet every selected requirement.")
+        else:
+            st.write(
+                f"These **{len(full_matches)}** tree(s) meet all selected requirements."
             )
-            with st.expander("See why"):
-                for name, reason in size_exclusions:
-                    st.write(f"• **{name}** — {reason}.")
+            for _, row in full_matches.iterrows():
+                render_tree_card(row)
 
-        for _, row in ranked.iterrows():
-            st.markdown('<div class="tree-card">', unsafe_allow_html=True)
-            c1, c2 = st.columns([1, 2.15], gap="large")
-
-            with c1:
-                image_url = row.get("image_url", "")
-                if isinstance(image_url, str) and image_url.strip():
-                    st.image(image_url, use_container_width=True)
-                else:
-                    st.markdown(
-                        f'<div class="photo-placeholder">Whole-tree photo pending<br>{row["common_name"]}</div>',
-                        unsafe_allow_html=True
-                    )
-
-                if isinstance(row.get("image_source_url"), str) and row.get("image_source_url"):
-                    st.link_button("View photo source", row["image_source_url"], use_container_width=True)
-
-                st.markdown(
-                    f'<div class="match-pill">{int(row["match_pct"])}% match</div>',
-                    unsafe_allow_html=True
-                )
-                st.markdown(
-                    f'<div class="status-pill">{row["wiegands_status"]}</div>',
-                    unsafe_allow_html=True
-                )
-
-            with c2:
-                st.markdown(f"### {row['common_name']}")
-                st.markdown(f"*{row['botanical_name']}*")
-                st.markdown(
-                    f'<div class="meta">{row["tree_type"]}</div>',
-                    unsafe_allow_html=True
-                )
-
-                m1, m2, m3 = st.columns(3)
-                m1.metric("Height", f"{int(row['height_min'])}–{int(row['height_max'])} ft")
-                m2.metric("Width", f"{int(row['width_min'])}–{int(row['width_max'])} ft")
-                m3.metric("Flowers", row["flowering"])
-
-                st.write(row["description"])
-                st.markdown(f"**Sun:** {row['sun_needs'].replace(';', ', ')}")
-
-                d1, d2 = st.columns(2)
-                with d1:
-                    st.markdown(f"**Preferred soil:** {row['preferred_soil']}")
-                    st.markdown(f"**Growth rate:** {row['growth_rate']}")
-                    st.markdown(f"**Michigan Native:** {row['michigan_native']}")
-                with d2:
-                    st.markdown(f"**Fall color:** {row['fall_color']}")
-                    st.markdown(f"**Moisture:** {row['moisture_notes']}")
-
-                st.markdown(
-                    f'<div class="reason"><b>Why it matches:</b> {row["reasons"]}</div>',
-                    unsafe_allow_html=True
-                )
-
-                source_bits = []
-                if isinstance(row.get("info_source_url"), str) and row.get("info_source_url"):
-                    source_bits.append(f"[Horticultural source]({row['info_source_url']})")
-                if isinstance(row.get("image_source_url"), str) and row.get("image_source_url"):
-                    source_bits.append(f"[Photo source]({row['image_source_url']})")
-                if source_bits:
-                    st.caption(" • ".join(source_bits))
-                if isinstance(row.get("photo_note"), str) and row.get("photo_note"):
-                    st.caption(row["photo_note"])
-
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("### Other Possibilities — Partial Matches")
+        if partial_matches.empty:
+            st.caption("No partial matches to show.")
+        else:
+            st.write(
+                "These trees meet **some, but not all**, of the selected requirements. "
+                "Each card explains exactly what falls outside your criteria."
+            )
+            for _, row in partial_matches.iterrows():
+                render_tree_card(row)
 
 with right:
     st.subheader("Your Criteria")
@@ -408,6 +444,13 @@ with right:
     st.caption(
         "Yes means the underlying tree species is originally native to Michigan. "
         "Cultivars of a Michigan-native species retain Yes; hybrids or entries whose species varies are labeled separately."
+    )
+
+    st.divider()
+    st.markdown("#### Match logic")
+    st.caption(
+        "Full Match means every selected requirement is met. Partial Match means "
+        "some selected requirements are met and the card identifies what does not match."
     )
 
     st.divider()
