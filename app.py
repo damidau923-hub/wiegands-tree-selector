@@ -37,6 +37,7 @@ def load_data():
         "size_source_name": "",
         "size_source_url": "",
         "image_url": "",
+        "form": "Tree Form",
     }
 
     for column, default in defaults.items():
@@ -562,6 +563,7 @@ def render_tree_card(row):
 
         st.write(row["description"])
         st.markdown(f"**Sun:** {row['sun_needs'].replace(';', ', ')}")
+        st.markdown(f"**Form:** {row['form']}")
 
         d1, d2 = st.columns(2)
         with d1:
@@ -684,16 +686,17 @@ with left:
                 )
                 comparison["Fall Color"] = comparison["fall_color"].fillna("Not specified")
                 comparison["Sun"] = comparison["sun_needs"].fillna("Not specified").str.replace(";", ", ", regex=False)
+                comparison["Form"] = comparison["form"].fillna("Tree Form")
 
                 comparison = comparison[
-                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color", "Sun"]
+                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color", "Sun", "Form"]
                 ]
 
                 edited_comparison = st.data_editor(
                     comparison,
                     hide_index=True,
                     use_container_width=True,
-                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color", "Sun"],
+                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Fall Color", "Sun", "Form"],
                     column_config={
                         "Select": st.column_config.CheckboxColumn(
                             "Show Details",
@@ -709,6 +712,7 @@ with left:
                         "Flowers": st.column_config.TextColumn("Flowers", width="small"),
                         "Fall Color": st.column_config.TextColumn("Fall Color", width="medium"),
                         "Sun": st.column_config.TextColumn("Sun", width="medium"),
+                        "Form": st.column_config.TextColumn("Form", width="medium"),
                     },
                     key="quick_comparison_editor",
                 )

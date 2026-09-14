@@ -1,27 +1,13 @@
-# Acme Nursery Tree Sales Assistant — POC v19
+# Acme Nursery Tree Sales Assistant — POC v20
 
-## Changes in v19
+## New in v20: Tree form
 
-### Smarter sun matching
-Sun exposure now uses three outcomes:
+A new **Form** field is included in the database, Quick Comparison table, and detailed cultivar cards.
 
-- **Preferred** — can qualify as a Full Match
-- **Tolerated** — remains visible as a Partial Match, with an explanation that growth, flowering, or fall color may be reduced
-- **Unsuitable** — treated as a mismatch for the sun requirement
+Values currently used:
+- **Tree Form**
+- **Tree Form or Multi-Stem**
 
-Examples:
-- A Full Sun tree on a Partial Sun site is no longer automatically a Full Match.
-- It can still appear as a Partial Match when that exposure is considered tolerated.
+The POC uses conservative defaults. Plants explicitly described as "on Standard" or "Tree Form" remain Tree Form. Selected species commonly offered in both forms are marked Tree Form or Multi-Stem.
 
-### Quick Comparison
-The comparison table now includes:
-- Show Details checkbox
-- Tree / Cultivar
-- Match
-- Mature Height
-- Mature Width
-- Flowers
-- Fall Color
-- Sun
-
-The rest of the sales flow is unchanged.
+This field describes how the plant may be offered and is separate from future live inventory availability.
