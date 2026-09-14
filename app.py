@@ -329,6 +329,9 @@ with left:
                         unsafe_allow_html=True
                     )
 
+                if isinstance(row.get("image_source_url"), str) and row.get("image_source_url"):
+                    st.link_button("View photo source", row["image_source_url"], use_container_width=True)
+
                 st.markdown(
                     f'<div class="match-pill">{int(row["match_pct"])}% match</div>',
                     unsafe_allow_html=True
@@ -391,6 +394,14 @@ with right:
 
     for item in criteria:
         st.write("• " + str(item))
+
+    st.divider()
+    st.markdown("#### Photo policy")
+    st.caption(
+        "POC photos come from reusable reference sources such as Wikimedia Commons. "
+        "We prioritize the exact cultivar and whole-tree habit. Representative species photos "
+        "are labeled, and they can later be replaced with Wiegand's photography."
+    )
 
     st.divider()
     st.markdown("#### Michigan Native")
