@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 
 st.set_page_config(
-    page_title="Wiegand's Tree Finder POC",
+    page_title="Wiegand's Tree Sales Assistant",
     page_icon="🌳",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -158,14 +158,34 @@ st.markdown("""
     color:#697269;
 }
 </style>
+
+<style>
+button, [data-testid="stBaseButton-secondary"], [data-testid="stBaseButton-primary"] {
+    min-height: 50px !important;
+    font-size: 1rem !important;
+}
+[data-testid="stSidebar"] label {
+    font-size: 1rem !important;
+    font-weight: 650 !important;
+}
+.tree-card { padding: 20px !important; }
+.tree-card img { border-radius: 14px; }
+.match-pill { font-size: 1rem !important; padding: 8px 12px !important; }
+.status-pill { font-size: .9rem !important; padding: 7px 10px !important; }
+@media (max-width: 1100px) {
+    .block-container { padding-left: 1rem; padding-right: 1rem; }
+    .hero-title { font-size: 1.8rem; }
+}
+</style>
+
 """, unsafe_allow_html=True)
 
 # ---------- Hero ----------
 st.markdown("""
 <div class="hero">
-  <div class="hero-title">Wiegand's Michigan Tree Finder</div>
+  <div class="hero-title">Wiegand's Tree Sales Assistant</div>
   <div class="hero-sub">
-    Select the characteristics that matter most and see Michigan-suitable tree recommendations from the current POC database.
+    Help a customer narrow the choices quickly, then compare full and partial matches side by side.
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -202,10 +222,11 @@ with st.sidebar:
 
     result_count = st.slider("Results per section", 3, 10, 5)
 
+    find_trees = st.button("Find Trees", type="primary", use_container_width=True)
+
     st.divider()
     st.caption(
-        "POC note: Wiegand's availability is provisional until the actual "
-        "Wiegand's product database is connected."
+        "Sales POC: product availability is provisional until Wiegand's live inventory is connected."
     )
 
 # ---------- Match evaluation ----------
@@ -324,11 +345,11 @@ else:
     partial_matches = evaluated
 
 # ---------- Results ----------
-left, right = st.columns([2.3, 1], gap="large")
+left, right = st.columns([2.4, 1], gap="large")
 
 def render_tree_card(row):
     st.markdown('<div class="tree-card">', unsafe_allow_html=True)
-    c1, c2 = st.columns([1, 2.15], gap="large")
+    c1, c2 = st.columns([1.25, 1.75], gap="large")
 
     with c1:
         image_url = row.get("image_url", "")
@@ -339,9 +360,6 @@ def render_tree_card(row):
                 f'<div class="photo-placeholder">Whole-tree photo pending<br>{row["common_name"]}</div>',
                 unsafe_allow_html=True
             )
-
-        if isinstance(row.get("image_source_url"), str) and row.get("image_source_url"):
-            st.link_button("View public photo source", row["image_source_url"], use_container_width=True)
 
         if row["match_status"] == "Full Match":
             st.markdown(
@@ -407,33 +425,21 @@ def render_tree_card(row):
                 unsafe_allow_html=True
             )
 
-        source_bits = []
-        if isinstance(row.get("info_source_url"), str) and row.get("info_source_url"):
-            source_bits.append(f"[Horticultural source]({row['info_source_url']})")
-        if isinstance(row.get("image_source_url"), str) and row.get("image_source_url"):
-            source_bits.append(f"[Photo source]({row['image_source_url']})")
-        if source_bits:
-            st.caption(" • ".join(source_bits))
-        if isinstance(row.get("photo_note"), str) and row.get("photo_note"):
-            st.caption(row["photo_note"])
-        if isinstance(row.get("photo_reference_type"), str) and row.get("photo_reference_type"):
-            st.caption(f"Photo reference: {row['photo_reference_type']}")
-
     st.markdown('</div>', unsafe_allow_html=True)
 
 with left:
-    st.subheader("Recommended Trees")
+    st.subheader("Customer Recommendations")
 
-    if candidates.empty:
+    if not find_trees:
+        st.info("Choose the customer's criteria, then tap **Find Trees**.")
+    elif candidates.empty:
         st.warning("No Michigan-suitable trees are available in the selected tree category.")
     else:
         st.markdown("### Full Matches")
         if full_matches.empty:
             st.info("No trees meet every selected requirement.")
         else:
-            st.write(
-                f"These **{len(full_matches)}** tree(s) meet all selected requirements."
-            )
+            st.write(f"These **{len(full_matches)}** tree(s) meet all selected requirements.")
             for _, row in full_matches.iterrows():
                 render_tree_card(row)
 
@@ -443,30 +449,27 @@ with left:
         else:
             st.write(
                 "These trees meet **some, but not all**, of the selected requirements. "
-                "Each card explains exactly what falls outside your criteria."
+                "Each card explains exactly what falls outside the customer's criteria."
             )
             for _, row in partial_matches.iterrows():
                 render_tree_card(row)
 
 with right:
-    st.subheader("Your Criteria")
-    criteria = []
-    criteria.append(f"Tree type: {tree_type}")
-    criteria.append(f"Maximum height: {max_height if max_height is not None else 'No limit'}")
-    criteria.append(f"Maximum width: {max_width if max_width is not None else 'No limit'}")
-    criteria.append(f"Flowering: {flowering}")
-    criteria.append(f"Sun: {sun}")
-
+    st.subheader("Customer Criteria")
+    criteria = [
+        f"Tree type: {tree_type}",
+        f"Maximum height: {max_height if max_height is not None else 'No limit'}",
+        f"Maximum width: {max_width if max_width is not None else 'No limit'}",
+        f"Flowering: {flowering}",
+        f"Sun: {sun}",
+    ]
     for item in criteria:
         st.write("• " + str(item))
 
     st.divider()
-    st.markdown("#### Photo policy")
+    st.markdown("#### Sales use")
     st.caption(
-        "POC photo sourcing now prioritizes university and arboretum collections, especially "
-        "NC State Plant Toolbox and JC Raulston Arboretum. Exact-cultivar and whole-tree images "
-        "are preferred; Wikimedia Commons is retained only as a fallback. Wiegand's own approved "
-        "photography can replace these references later."
+        "Start with Full Matches. Use Partial Matches when the customer may be willing to relax one requirement."
     )
 
     st.divider()
@@ -479,25 +482,16 @@ with right:
     st.divider()
     st.markdown("#### Match logic")
     st.caption(
-        "Full Match means every selected requirement is met. Partial Match means "
-        "some selected requirements are met and the card identifies what does not match."
+        "Full Match means every selected requirement is met. Partial Match means some selected "
+        "requirements are met and the card identifies what does not match."
     )
 
-    st.divider()
-    st.markdown("#### Next POC upgrades")
-    st.write("• Expand photo coverage to every exact cultivar")
-    st.write("• Connect Wiegand's actual tree list")
-    st.write("• Verify all cultivar-specific horticultural attributes against final Wiegand's assortment")
-    st.write("• Add natural-language AI search")
-    st.write("• Later connect recommendations to the landscape visualizer")
+    with st.expander("POC development notes"):
+        st.write("• Connect Wiegand's live tree/product inventory")
+        st.write("• Replace reference photos with approved Wiegand's or supplier photography")
+        st.write("• Add natural-language sales search")
+        st.write("• Connect selected trees to the landscape visualizer")
 
-    st.divider()
-    st.markdown("#### Light matching")
-    st.caption(
-        "The POC now treats sun exposure as overlapping ranges. "
-        "For example, Partial Sun can match trees listed for Full Sun, "
-        "Partial Sun, or Partial Shade."
-    )
 
 st.divider()
 st.markdown(

@@ -1,13 +1,15 @@
-# Wiegand's Michigan Tree Finder — POC v9
+# Wiegand's Tree Sales Assistant — POC v10
 
-## Public photo-source upgrade
-- University/arboretum sources are now preferred over Wikimedia.
-- NC State Extension Plant Toolbox is the primary general reference source.
-- JC Raulston Arboretum is used where its cultivar-specific collections are especially useful.
-- Rising Sun Redbud now points to its exact JC Raulston cultivar photo collection.
-- Crimson King Maple points to the NC State Norway maple page that includes Crimson King imagery.
-- Exact known cultivar/species pages are curated where available.
-- Every remaining tree has a targeted university photo lookup plus a Wikimedia fallback.
-- The app labels whether the photo reference is curated or still needs exact-cultivar verification.
+## Tablet-first sales changes
+- Rebrands the app as **Wiegand's Tree Sales Assistant**.
+- Designed primarily for a salesperson using a tablet beside a customer.
+- Adds a large **Find Trees** button so recommendations appear after criteria are entered.
+- Enlarges touch targets, photos, badges, and card spacing.
+- Uses **Customer Recommendations** and **Customer Criteria** language.
+- Removes photo-source and technical reference links from the main sales cards.
+- Keeps source/licensing information in the database for development.
+- Keeps **Full Match** first and **Partial Match** second.
+- Keeps exact explanations for Partial Matches.
+- Moves development details into a compact internal notes expander.
 
-Important: a public web page is not automatically a license to copy its photographs. Before production use, verify the individual image's license/permission or replace it with Wiegand's-owned photography.
+The horticultural database and match logic from v9/v8.1 are retained.
