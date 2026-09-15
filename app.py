@@ -39,6 +39,7 @@ def load_data():
         "image_url": "",
         "form": "Tree Form",
         "flower_color": "To verify",
+        "bloom_season": "To verify",
     }
 
     for column, default in defaults.items():
@@ -571,6 +572,7 @@ def render_tree_card(row):
 
         st.write(row["description"])
         st.markdown(f"**Flower Color:** {row['flower_color']}")
+        st.markdown(f"**Bloom Season:** {row['bloom_season']}")
         st.markdown(f"**Sun:** {row['sun_needs'].replace(';', ', ')}")
         st.markdown(f"**Form:** {row['form']}")
 
@@ -699,19 +701,20 @@ with left:
                     lambda x: "Yes" if str(x).strip().lower() == "yes" else "No"
                 )
                 comparison["Flower Color"] = comparison["flower_color"].fillna("To verify")
+                comparison["Bloom Season"] = comparison["bloom_season"].fillna("To verify")
                 comparison["Fall Color"] = comparison["fall_color"].fillna("Not specified")
                 comparison["Sun"] = comparison["sun_needs"].fillna("Not specified").str.replace(";", ", ", regex=False)
                 comparison["Form"] = comparison["form"].fillna("Tree Form")
 
                 comparison = comparison[
-                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Flower Color", "Fall Color", "Sun", "Form"]
+                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"]
                 ]
 
                 edited_comparison = st.data_editor(
                     comparison,
                     hide_index=True,
                     use_container_width=True,
-                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Flower Color", "Fall Color", "Sun", "Form"],
+                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"],
                     column_config={
                         "Select": st.column_config.CheckboxColumn(
                             "Show Details",
@@ -726,6 +729,7 @@ with left:
                         "Width": st.column_config.TextColumn("Mature Width", width="medium"),
                         "Flowers": st.column_config.TextColumn("Flowers", width="small"),
                         "Flower Color": st.column_config.TextColumn("Flower Color", width="medium"),
+                        "Bloom Season": st.column_config.TextColumn("Bloom Season", width="medium"),
                         "Fall Color": st.column_config.TextColumn("Fall Color", width="medium"),
                         "Sun": st.column_config.TextColumn("Sun", width="medium"),
                         "Form": st.column_config.TextColumn("Form", width="medium"),
