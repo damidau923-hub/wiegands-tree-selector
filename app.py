@@ -692,12 +692,47 @@ with left:
 
             nav_back, nav_expand = st.columns([1, 1])
             with nav_back:
-                if st.button("← Back to Tree Types", use_container_width=True):
+                if st.button("← Back to Tree Types", type="primary", use_container_width=True):
                     st.session_state.comparison_started = False
                     st.session_state.details_started = False
                     st.rerun()
             with nav_expand:
-                st.button("⛶ Comparison Expanded", disabled=True, use_container_width=True)
+                st.components.v1.html(
+                    """
+                    <button id="fsBtn" onclick="goFullscreen()" style="
+                        width:100%;
+                        background:#b71c1c;
+                        color:white;
+                        border:1px solid #b71c1c;
+                        border-radius:0.5rem;
+                        padding:0.62rem 0.75rem;
+                        font-size:1rem;
+                        font-weight:600;
+                        cursor:pointer;">
+                        ⛶ Full Screen Comparison
+                    </button>
+                    <script>
+                    function goFullscreen() {
+                        const doc = window.parent.document;
+                        const el = doc.documentElement;
+                        if (!doc.fullscreenElement) {
+                            if (el.requestFullscreen) {
+                                el.requestFullscreen();
+                            } else if (el.webkitRequestFullscreen) {
+                                el.webkitRequestFullscreen();
+                            }
+                        } else {
+                            if (doc.exitFullscreen) {
+                                doc.exitFullscreen();
+                            } else if (doc.webkitExitFullscreen) {
+                                doc.webkitExitFullscreen();
+                            }
+                        }
+                    }
+                    </script>
+                    """,
+                    height=48,
+                )
 
             st.markdown("# Quick Comparison")
             st.markdown(

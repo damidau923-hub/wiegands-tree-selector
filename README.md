@@ -1,9 +1,7 @@
-# Acme Nursery Tree Sales Assistant — POC v31
+# Acme Nursery Tree Sales Assistant — POC v32
 
-- Darker, easier-to-read secondary text on tree cards.
-- “Matches” renamed to “Cultivar Matches.”
-- Dedicated maximum-width Quick Comparison workspace.
-- Clear Back to Tree Types navigation and expanded-comparison indicator.
-- Selected cultivars no longer immediately display cards.
-- Continue to Tree Details explicitly advances to detailed cards.
-- Back to Quick Comparison returns from the details section.
+## Fullscreen navigation update
+- **Back to Tree Types** now uses the same red primary-action styling as the other major workflow buttons.
+- Replaced the disabled “Comparison Expanded” indicator with a red **Full Screen Comparison** control.
+- Full Screen Comparison requests browser fullscreen after the salesperson taps it, satisfying the browser requirement for a user-initiated fullscreen action.
+- Quick Comparison still uses the maximum available app width when browser fullscreen is not active.
