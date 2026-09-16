@@ -1,11 +1,6 @@
-# Acme Nursery Tree Sales Assistant — POC v26
+# Acme Nursery Tree Sales Assistant — POC v27
 
-## Demo workflow improvements
+## Focused Quick Comparison
+After **Continue to Quick Comparison**, the comparison workspace expands to essentially the full available Streamlit page width and the side helper panel is hidden. A **← Back to Recommendations** button is provided above the table.
 
-- **Find Trees** changes to a disabled gray **✓ Trees Found** button after it is selected.
-- A prominent **Review Recommended Trees** button opens the recommendation summary.
-- After the customer selects tree types, a prominent **Continue to Quick Comparison** button advances the workflow.
-- The salesperson no longer needs to find or collapse an expander to move forward.
-- **Start New Search** resets the guided workflow.
-
-All v25 plant data and matching features are retained.
+This is an app-level focus view, not browser fullscreen, so it works without browser fullscreen permissions.
