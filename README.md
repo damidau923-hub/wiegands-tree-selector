@@ -1,11 +1,10 @@
-# Acme Nursery Tree Sales Assistant — POC v35
+# Acme Nursery Tree Sales Assistant — POC v37
 
-## Full Screen Comparison correction
-The Find a Tree area is implemented as the Streamlit sidebar, not the right-side criteria panel. In Full Screen Comparison mode v35 now explicitly removes:
-- the entire Find a Tree sidebar
-- the sidebar collapse control
-- the Acme Nursery hero/header area
-- Streamlit header/tool chrome where possible
-- extra page margins
+## Photo presentation
+- Each detailed cultivar card is designed to show one approved nursery/Wiegand's whole-tree photo as the primary image.
+- Until an approved nursery image is supplied, the card displays a clear Nursery photo pending placeholder.
+- When a vetted public/reference URL exists, a secondary View More Photos link appears below the primary image area.
+- The public reference is supplementary; it does not replace the nursery image.
+- This structure can later be expanded to a 2–4 image approved nursery gallery per cultivar.
 
-The Quick Comparison remains with the red Back to Tree Types and Exit Full Screen controls and receives the full available application width.
+All v36 workflow, comparison, readability, and inventory-label changes are retained.

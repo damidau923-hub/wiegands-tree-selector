@@ -232,7 +232,7 @@ st.markdown("""
     display:flex;
     align-items:center;
     justify-content:center;
-    color:#6d786b;
+    color:#202124;
     font-weight:650;
     text-align:center;
     padding: 12px;
@@ -289,6 +289,21 @@ st.markdown("""
 .card-why b {
     color:#111418 !important;
     font-weight:750 !important;
+}
+
+.more-photos-link {
+    display:inline-block;
+    color:#9f1111 !important;
+    font-size:1rem;
+    font-weight:750;
+    text-decoration:none;
+    margin-top:.45rem;
+}
+.more-photos-link:hover { text-decoration:underline; }
+.photo-source-note {
+    color:#303238 !important;
+    font-size:.9rem;
+    margin-bottom:.4rem;
 }
 </style>
 
@@ -365,6 +380,8 @@ with st.sidebar:
         st.session_state.details_started = False
     if "comparison_fullscreen" not in st.session_state:
         st.session_state.comparison_fullscreen = False
+    if "selected_detail_ids" not in st.session_state:
+        st.session_state.selected_detail_ids = []
 
     if not st.session_state.search_started:
         if st.button("Find Trees", type="primary", use_container_width=True):
@@ -565,7 +582,17 @@ button[kind="primary"]:hover {
 }
 .tree-card, .tree-card p, .tree-card div, .tree-card span { color: #202124 !important; }
 .tree-card .meta { color: #303238 !important; }
-div[data-testid="stCaptionContainer"] p { color: #303238 !important; font-size: 1rem !important; }
+div[data-testid="stCaptionContainer"] p { color: #202124 !important; font-size: 1rem !important; }
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stWidgetLabel"] p,
+[data-testid="stAlert"] p,
+[data-testid="stAlert"] div {
+    color: #202124 !important;
+}
+small, .small-note, .meta {
+    color: #303238 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -598,11 +625,27 @@ def render_tree_card(row):
 
     with c1:
         image_url = row.get("image_url", "")
+        image_source_url = row.get("image_source_url", "")
+        image_source = row.get("image_source", "")
+
+        # Primary visual: one approved nursery/Wiegand's whole-tree photo.
         if isinstance(image_url, str) and image_url.strip():
             st.image(image_url, use_container_width=True)
+            st.caption("Nursery photo")
         else:
             st.markdown(
-                f'<div class="photo-placeholder">Whole-tree photo pending<br>{row["common_name"]}</div>',
+                f'<div class="photo-placeholder"><b>Nursery photo pending</b><br>'
+                f'Approved whole-tree photo needed for {row["common_name"]}</div>',
+                unsafe_allow_html=True
+            )
+
+        # Secondary visual resource: vetted public page with additional photos.
+        if isinstance(image_source_url, str) and image_source_url.strip():
+            source_name = image_source if isinstance(image_source, str) and image_source.strip() else "Public reference"
+            st.markdown(
+                f'<a class="more-photos-link" href="{image_source_url}" target="_blank" '
+                f'rel="noopener noreferrer">View More Photos ↗</a>'
+                f'<div class="photo-source-note">{source_name}</div>',
                 unsafe_allow_html=True
             )
 
@@ -721,31 +764,12 @@ with left:
         if visible_matches.empty:
             st.warning("No tree types meet or partially meet the selected criteria. Try adjusting one of the customer requirements.")
         elif comparison_focus:
-            # Dedicated comparison screen. Do not render broad-choice cards or Step 2 here.
+            # Dedicated comparison/details workflow.
             selected_groups = list(st.session_state.get("previous_group_selection", ()))
 
             if not selected_groups:
                 st.session_state.comparison_started = False
                 st.rerun()
-
-            nav_back, nav_expand = st.columns([1, 1])
-            with nav_back:
-                if st.button("← Back to Tree Types", type="primary", use_container_width=True):
-                    st.session_state.comparison_started = False
-                    st.session_state.details_started = False
-                    st.session_state.comparison_fullscreen = False
-                    st.rerun()
-            with nav_expand:
-                fs_label = "↙ Exit Full Screen" if st.session_state.comparison_fullscreen else "⛶ Full Screen Comparison"
-                if st.button(fs_label, type="primary", use_container_width=True):
-                    st.session_state.comparison_fullscreen = not st.session_state.comparison_fullscreen
-                    st.rerun()
-
-            st.markdown("# Quick Comparison")
-            st.markdown(
-                "**Compare the selected tree types below. Check Show Details only for the cultivars "
-                "the customer wants to review more closely.**"
-            )
 
             selected_rows = visible_matches[visible_matches["sales_group"].isin(selected_groups)].copy()
             selected_rows["status_order"] = selected_rows["match_status"].map({"Full Match": 0, "Partial Match": 1})
@@ -754,79 +778,16 @@ with left:
                 ascending=[True, True, False]
             )
 
-            comparison = selected_rows.copy()
-            comparison["Select"] = False
-            comparison["Tree / Cultivar"] = comparison["common_name"]
-            comparison["Match"] = comparison["match_status"]
-            comparison["Height"] = comparison.apply(
-                lambda r: format_range(r["height_min"], r["height_max"]), axis=1
-            )
-            comparison["Width"] = comparison.apply(
-                lambda r: format_range(r["width_min"], r["width_max"]), axis=1
-            )
-            comparison["Flowers"] = comparison["flowering"].apply(
-                lambda x: "Yes" if str(x).strip().lower() == "yes" else "No"
-            )
-            comparison["Flower Color"] = comparison["flower_color"].fillna("To verify")
-            comparison["Bloom Season"] = comparison["bloom_season"].fillna("To verify")
-            comparison["Fall Color"] = comparison["fall_color"].fillna("Not specified")
-            comparison["Sun"] = comparison["sun_needs"].fillna("Not specified").str.replace(";", ", ", regex=False)
-            comparison["Form"] = comparison["form"].fillna("Tree Form")
-            comparison = comparison[
-                ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers",
-                 "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"]
-            ]
-
-            editor_key = "quick_comparison_editor_" + "_".join(
-                str(g).lower().replace(" ", "_") for g in sorted(selected_groups)
-            )
-            edited_comparison = st.data_editor(
-                comparison,
-                hide_index=True,
-                use_container_width=True,
-                disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers",
-                          "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"],
-                column_config={
-                    "Select": st.column_config.CheckboxColumn(
-                        "Show Details",
-                        help="Check the cultivars you want to review in detail below.",
-                        default=False,
-                        width="small",
-                    ),
-                    "id": None,
-                    "Tree / Cultivar": st.column_config.TextColumn("Tree / Cultivar", width="large"),
-                    "Match": st.column_config.TextColumn("Match", width="medium"),
-                    "Height": st.column_config.TextColumn("Mature Height", width="medium"),
-                    "Width": st.column_config.TextColumn("Mature Width", width="medium"),
-                    "Flowers": st.column_config.TextColumn("Flowers", width="small"),
-                    "Flower Color": st.column_config.TextColumn("Flower Color", width="medium"),
-                    "Bloom Season": st.column_config.TextColumn("Bloom Season", width="medium"),
-                    "Fall Color": st.column_config.TextColumn("Fall Color", width="medium"),
-                    "Sun": st.column_config.TextColumn("Sun", width="medium"),
-                    "Form": st.column_config.TextColumn("Form", width="medium"),
-                },
-                key=editor_key,
-            )
-
-            selected_ids = edited_comparison.loc[
-                edited_comparison["Select"] == True, "id"
-            ].tolist()
-
-            if not selected_ids:
-                st.session_state.details_started = False
-                st.info("Check one or more cultivars under **Show Details**, then continue to Tree Details.")
-            elif not st.session_state.details_started:
-                if st.button("Continue to Tree Details", type="primary", use_container_width=True):
-                    st.session_state.details_started = True
-                    st.rerun()
-            else:
-                st.markdown("---")
-                st.markdown("# Tree Details")
-                if st.button("← Back to Quick Comparison", use_container_width=True):
+            # Tree Details is its own screen: Quick Comparison is not rendered above it.
+            if st.session_state.details_started:
+                if st.button("← Back to Quick Comparison", type="primary", use_container_width=True):
                     st.session_state.details_started = False
                     st.rerun()
 
-                detail_rows = selected_rows[selected_rows["id"].isin(selected_ids)].copy()
+                st.markdown("# Tree Details")
+                detail_ids = list(st.session_state.get("selected_detail_ids", []))
+                detail_rows = selected_rows[selected_rows["id"].isin(detail_ids)].copy()
+
                 for group in selected_groups:
                     group_rows = detail_rows[detail_rows["sales_group"] == group]
                     if group_rows.empty:
@@ -836,6 +797,92 @@ with left:
                     st.caption(meta["summary"])
                     for _, row in group_rows.iterrows():
                         render_tree_card(row)
+
+            else:
+                nav_back, nav_expand = st.columns([1, 1])
+                with nav_back:
+                    if st.button("← Back to Tree Types", type="primary", use_container_width=True):
+                        st.session_state.comparison_started = False
+                        st.session_state.details_started = False
+                        st.session_state.comparison_fullscreen = False
+                        st.session_state.selected_detail_ids = []
+                        st.rerun()
+                with nav_expand:
+                    fs_label = "↙ Exit Full Screen" if st.session_state.comparison_fullscreen else "⛶ Full Screen Comparison"
+                    if st.button(fs_label, type="primary", use_container_width=True):
+                        st.session_state.comparison_fullscreen = not st.session_state.comparison_fullscreen
+                        st.rerun()
+
+                st.markdown("# Quick Comparison")
+                st.markdown(
+                    "**Compare the selected tree types below. Check Show Details for the cultivars "
+                    "the customer wants to review, then continue to Tree Details.**"
+                )
+
+                comparison = selected_rows.copy()
+                comparison["Select"] = False
+                comparison["Tree / Cultivar"] = comparison["common_name"]
+                comparison["Match"] = comparison["match_status"]
+                comparison["Height"] = comparison.apply(
+                    lambda r: format_range(r["height_min"], r["height_max"]), axis=1
+                )
+                comparison["Width"] = comparison.apply(
+                    lambda r: format_range(r["width_min"], r["width_max"]), axis=1
+                )
+                comparison["Flowers"] = comparison["flowering"].apply(
+                    lambda x: "Yes" if str(x).strip().lower() == "yes" else "No"
+                )
+                comparison["Flower Color"] = comparison["flower_color"].fillna("To verify")
+                comparison["Bloom Season"] = comparison["bloom_season"].fillna("To verify")
+                comparison["Fall Color"] = comparison["fall_color"].fillna("Not specified")
+                comparison["Sun"] = comparison["sun_needs"].fillna("Not specified").str.replace(";", ", ", regex=False)
+                comparison["Form"] = comparison["form"].fillna("Tree Form")
+                comparison = comparison[
+                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers",
+                     "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"]
+                ]
+
+                editor_key = "quick_comparison_editor_" + "_".join(
+                    str(g).lower().replace(" ", "_") for g in sorted(selected_groups)
+                )
+                edited_comparison = st.data_editor(
+                    comparison,
+                    hide_index=True,
+                    use_container_width=True,
+                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers",
+                              "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"],
+                    column_config={
+                        "Select": st.column_config.CheckboxColumn(
+                            "Details", help="Select cultivars to review in Tree Details.",
+                            default=False, width="small"
+                        ),
+                        "id": None,
+                        "Tree / Cultivar": st.column_config.TextColumn("Cultivar", width="medium"),
+                        "Match": st.column_config.TextColumn("Match", width="small"),
+                        "Height": st.column_config.TextColumn("Height", width="small"),
+                        "Width": st.column_config.TextColumn("Width", width="small"),
+                        "Flowers": st.column_config.TextColumn("Flowers", width="small"),
+                        "Flower Color": st.column_config.TextColumn("Flower Color", width="small"),
+                        "Bloom Season": st.column_config.TextColumn("Bloom", width="small"),
+                        "Fall Color": st.column_config.TextColumn("Fall Color", width="small"),
+                        "Sun": st.column_config.TextColumn("Sun", width="small"),
+                        "Form": st.column_config.TextColumn("Form", width="small"),
+                    },
+                    key=editor_key,
+                )
+
+                selected_ids = edited_comparison.loc[
+                    edited_comparison["Select"] == True, "id"
+                ].tolist()
+
+                if not selected_ids:
+                    st.info("Select one or more cultivars under **Details**.")
+                else:
+                    if st.button("Continue to Tree Details", type="primary", use_container_width=True):
+                        st.session_state.selected_detail_ids = list(selected_ids)
+                        st.session_state.details_started = True
+                        st.session_state.comparison_fullscreen = False
+                        st.rerun()
 
         else:
             # Broad recommendations / Step 2 selection screen.
