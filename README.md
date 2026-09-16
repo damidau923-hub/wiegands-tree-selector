@@ -1,8 +1,11 @@
-# Acme Nursery Tree Sales Assistant — POC v29
+# Acme Nursery Tree Sales Assistant — POC v30
 
-## Quick Comparison hotfix
-Fixed the workflow transition that could prevent Quick Comparison from generating after clicking Continue.
-
-The selected tree groups are now preserved explicitly when Continue is clicked, and the comparison focus state is no longer reset during the rerun that opens Quick Comparison.
-
-Retains all v28 demo refinements.
+## Guided comparison workflow
+- Step 2 has larger typography and a red/high-emphasis tree-type selection area.
+- Primary action buttons use red styling.
+- Selecting tree types and clicking Continue now opens a dedicated full-width Quick Comparison screen.
+- Broad recommendation cards and the Step 2 selector are not rendered on the comparison screen.
+- Quick Comparison is automatically visible; no expand action is required.
+- Only the selected tree groups are included in Quick Comparison.
+- Detailed cultivar cards remain hidden until Show Details is checked.
+- Added a clear Back to Tree Types button.

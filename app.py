@@ -538,6 +538,19 @@ else:
     full_matches = evaluated
     partial_matches = evaluated
 
+st.markdown("""
+<style>
+button[kind="primary"] {
+    background-color: #b71c1c !important;
+    border-color: #b71c1c !important;
+}
+button[kind="primary"]:hover {
+    background-color: #8e0000 !important;
+    border-color: #8e0000 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ---------- Results ----------
 comparison_focus = st.session_state.get("comparison_started", False)
 if comparison_focus:
@@ -656,16 +669,115 @@ def group_summary_table(matches_df):
     ).drop(columns=["other_last"])
 
 with left:
-    st.subheader("1. Broad Choices That Fit the Customer")
-
     if not find_trees:
+        st.subheader("1. Broad Choices That Fit the Customer")
         st.info("Choose the customer's criteria, then tap **Find Trees**.")
     else:
         visible_matches = evaluated[evaluated["match_status"].isin(["Full Match", "Partial Match"])].copy()
 
         if visible_matches.empty:
             st.warning("No tree types meet or partially meet the selected criteria. Try adjusting one of the customer requirements.")
+        elif comparison_focus:
+            # Dedicated comparison screen. Do not render broad-choice cards or Step 2 here.
+            selected_groups = list(st.session_state.get("previous_group_selection", ()))
+
+            if not selected_groups:
+                st.session_state.comparison_started = False
+                st.rerun()
+
+            if st.button("← Back to Tree Types", use_container_width=True):
+                st.session_state.comparison_started = False
+                st.rerun()
+
+            st.markdown("# Quick Comparison")
+            st.markdown(
+                "**Compare the selected tree types below. Check Show Details only for the cultivars "
+                "the customer wants to review more closely.**"
+            )
+
+            selected_rows = visible_matches[visible_matches["sales_group"].isin(selected_groups)].copy()
+            selected_rows["status_order"] = selected_rows["match_status"].map({"Full Match": 0, "Partial Match": 1})
+            selected_rows = selected_rows.sort_values(
+                ["status_order", "sales_group", "rank_score"],
+                ascending=[True, True, False]
+            )
+
+            comparison = selected_rows.copy()
+            comparison["Select"] = False
+            comparison["Tree / Cultivar"] = comparison["common_name"]
+            comparison["Match"] = comparison["match_status"]
+            comparison["Height"] = comparison.apply(
+                lambda r: format_range(r["height_min"], r["height_max"]), axis=1
+            )
+            comparison["Width"] = comparison.apply(
+                lambda r: format_range(r["width_min"], r["width_max"]), axis=1
+            )
+            comparison["Flowers"] = comparison["flowering"].apply(
+                lambda x: "Yes" if str(x).strip().lower() == "yes" else "No"
+            )
+            comparison["Flower Color"] = comparison["flower_color"].fillna("To verify")
+            comparison["Bloom Season"] = comparison["bloom_season"].fillna("To verify")
+            comparison["Fall Color"] = comparison["fall_color"].fillna("Not specified")
+            comparison["Sun"] = comparison["sun_needs"].fillna("Not specified").str.replace(";", ", ", regex=False)
+            comparison["Form"] = comparison["form"].fillna("Tree Form")
+            comparison = comparison[
+                ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers",
+                 "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"]
+            ]
+
+            editor_key = "quick_comparison_editor_" + "_".join(
+                str(g).lower().replace(" ", "_") for g in sorted(selected_groups)
+            )
+            edited_comparison = st.data_editor(
+                comparison,
+                hide_index=True,
+                use_container_width=True,
+                disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers",
+                          "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"],
+                column_config={
+                    "Select": st.column_config.CheckboxColumn(
+                        "Show Details",
+                        help="Check the cultivars you want to review in detail below.",
+                        default=False,
+                        width="small",
+                    ),
+                    "id": None,
+                    "Tree / Cultivar": st.column_config.TextColumn("Tree / Cultivar", width="large"),
+                    "Match": st.column_config.TextColumn("Match", width="medium"),
+                    "Height": st.column_config.TextColumn("Mature Height", width="medium"),
+                    "Width": st.column_config.TextColumn("Mature Width", width="medium"),
+                    "Flowers": st.column_config.TextColumn("Flowers", width="small"),
+                    "Flower Color": st.column_config.TextColumn("Flower Color", width="medium"),
+                    "Bloom Season": st.column_config.TextColumn("Bloom Season", width="medium"),
+                    "Fall Color": st.column_config.TextColumn("Fall Color", width="medium"),
+                    "Sun": st.column_config.TextColumn("Sun", width="medium"),
+                    "Form": st.column_config.TextColumn("Form", width="medium"),
+                },
+                key=editor_key,
+            )
+
+            selected_ids = edited_comparison.loc[
+                edited_comparison["Select"] == True, "id"
+            ].tolist()
+
+            if not selected_ids:
+                st.info("Check one or more cultivars under **Show Details** to display detailed cards.")
+            else:
+                st.subheader("Review Selected Cultivars")
+                detail_rows = selected_rows[selected_rows["id"].isin(selected_ids)].copy()
+                for group in selected_groups:
+                    group_rows = detail_rows[detail_rows["sales_group"] == group]
+                    if group_rows.empty:
+                        continue
+                    meta = GROUP_OVERVIEWS.get(group, GROUP_OVERVIEWS["Other"])
+                    st.markdown(f"## {meta['label']}")
+                    st.caption(meta["summary"])
+                    for _, row in group_rows.iterrows():
+                        render_tree_card(row)
+
         else:
+            # Broad recommendations / Step 2 selection screen.
+            st.subheader("1. Broad Choices That Fit the Customer")
             group_table = group_summary_table(visible_matches)
             available_groups = group_table["sales_group"].tolist()
 
@@ -678,144 +790,58 @@ with left:
                 if st.button("Review Recommended Trees", type="primary", use_container_width=True):
                     st.session_state.review_recommendations = True
                     st.rerun()
-                st.stop()
-
-            cols = st.columns(2)
-            for pos, (_, grow) in enumerate(group_table.iterrows()):
-                group = grow["sales_group"]
-                meta = GROUP_OVERVIEWS.get(group, GROUP_OVERVIEWS["Other"])
-                group_rows = visible_matches[visible_matches["sales_group"] == group]
-                hmin = int(group_rows["height_min"].min())
-                hmax = int(group_rows["height_max"].max())
-                wmin = int(group_rows["width_min"].min())
-                wmax = int(group_rows["width_max"].max())
-
-                with cols[pos % 2]:
-                    st.markdown('<div class="tree-card">', unsafe_allow_html=True)
-                    st.markdown(f"### {meta['label']}")
-                    st.write(meta["summary"])
-                    st.caption(meta["why"])
-                    st.markdown(f"**Typical range in current POC:** {hmin}–{hmax} ft tall · {wmin}–{wmax} ft wide")
-                    st.markdown(f"**Matches:** {int(grow['full_count'])} full · {int(grow['partial_count'])} partial")
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-            st.subheader("2. Choose Tree Types to Review")
-            st.caption("You can select multiple tree types.")
-            selected_groups = st.multiselect(
-                "Which types does the customer want to see?",
-                options=available_groups,
-                default=[],
-                placeholder="Example: Serviceberry, Hydrangea Tree on Standard"
-            )
-
-            current_group_selection = tuple(selected_groups)
-            # Preserve the chosen groups so the focused Quick Comparison can
-            # render them after Continue. Do not reset comparison state here;
-            # that previously prevented the comparison from opening reliably.
-            st.session_state.previous_group_selection = current_group_selection
-
-            if not selected_groups:
-                st.session_state.comparison_started = False
-                st.info("Select one or more tree types above, then tap **Continue to Quick Comparison**.")
-            elif not st.session_state.comparison_started:
-                if st.button("Continue to Quick Comparison", type="primary", use_container_width=True):
-                    st.session_state.previous_group_selection = tuple(selected_groups)
-                    st.session_state.comparison_started = True
-                    st.rerun()
             else:
-                if comparison_focus:
-                    if st.button("← Back to Recommendations", use_container_width=True):
-                        st.session_state.comparison_started = False
-                        st.rerun()
-                    st.markdown("## Quick Comparison — Focus View")
-                    st.caption("Select the cultivars the customer wants to review in detail.")
+                cols = st.columns(2)
+                for pos, (_, grow) in enumerate(group_table.iterrows()):
+                    group = grow["sales_group"]
+                    meta = GROUP_OVERVIEWS.get(group, GROUP_OVERVIEWS["Other"])
+                    group_rows = visible_matches[visible_matches["sales_group"] == group]
+                    hmin = int(group_rows["height_min"].min())
+                    hmax = int(group_rows["height_max"].max())
+                    wmin = int(group_rows["width_min"].min())
+                    wmax = int(group_rows["width_max"].max())
 
-                selected_rows = visible_matches[visible_matches["sales_group"].isin(selected_groups)].copy()
-                selected_rows["status_order"] = selected_rows["match_status"].map({"Full Match": 0, "Partial Match": 1})
-                selected_rows = selected_rows.sort_values(
-                    ["status_order", "sales_group", "rank_score"],
-                    ascending=[True, True, False]
+                    with cols[pos % 2]:
+                        st.markdown('<div class="tree-card">', unsafe_allow_html=True)
+                        st.markdown(f"### {meta['label']}")
+                        st.write(meta["summary"])
+                        st.caption(meta["why"])
+                        st.markdown(f"**Typical range in current POC:** {hmin}–{hmax} ft tall · {wmin}–{wmax} ft wide")
+                        st.markdown(f"**Matches:** {int(grow['full_count'])} full · {int(grow['partial_count'])} partial")
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+                # Larger, high-emphasis Step 2.
+                st.markdown("""
+                <style>
+                div[data-testid="stMultiSelect"] label p {
+                    font-size: 1.25rem !important;
+                    font-weight: 700 !important;
+                }
+                div[data-testid="stMultiSelect"] {
+                    border: 3px solid #c62828;
+                    border-radius: 10px;
+                    padding: 10px;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+
+                st.markdown("## 2. Choose Tree Types to Review")
+                st.markdown("### You can select multiple tree types.")
+                selected_groups = st.multiselect(
+                    "Which types does the customer want to see?",
+                    options=available_groups,
+                    default=list(st.session_state.get("previous_group_selection", ())),
+                    placeholder="Select one or more tree types"
                 )
+                st.session_state.previous_group_selection = tuple(selected_groups)
 
-                if not comparison_focus:
-                    st.subheader("3. Quick Comparison")
-                    st.caption(
-                        "Compare the matching cultivars at a glance. Full Matches appear first, followed by Partial Matches."
-                    )
-
-                comparison = selected_rows.copy()
-                comparison["Select"] = False
-                comparison["Tree / Cultivar"] = comparison["common_name"]
-                comparison["Match"] = comparison["match_status"]
-                comparison["Height"] = comparison.apply(
-                    lambda r: format_range(r["height_min"], r["height_max"]), axis=1
-                )
-                comparison["Width"] = comparison.apply(
-                    lambda r: format_range(r["width_min"], r["width_max"]), axis=1
-                )
-                comparison["Flowers"] = comparison["flowering"].apply(
-                    lambda x: "Yes" if str(x).strip().lower() == "yes" else "No"
-                )
-                comparison["Flower Color"] = comparison["flower_color"].fillna("To verify")
-                comparison["Bloom Season"] = comparison["bloom_season"].fillna("To verify")
-                comparison["Fall Color"] = comparison["fall_color"].fillna("Not specified")
-                comparison["Sun"] = comparison["sun_needs"].fillna("Not specified").str.replace(";", ", ", regex=False)
-                comparison["Form"] = comparison["form"].fillna("Tree Form")
-
-                comparison = comparison[
-                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"]
-                ]
-
-                edited_comparison = st.data_editor(
-                    comparison,
-                    hide_index=True,
-                    use_container_width=True,
-                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers", "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"],
-                    column_config={
-                        "Select": st.column_config.CheckboxColumn(
-                            "Show Details",
-                            help="Check the cultivars you want to review in detail below.",
-                            default=False,
-                            width="small",
-                        ),
-                        "id": None,
-                        "Tree / Cultivar": st.column_config.TextColumn("Tree / Cultivar", width="large"),
-                        "Match": st.column_config.TextColumn("Match", width="medium"),
-                        "Height": st.column_config.TextColumn("Mature Height", width="medium"),
-                        "Width": st.column_config.TextColumn("Mature Width", width="medium"),
-                        "Flowers": st.column_config.TextColumn("Flowers", width="small"),
-                        "Flower Color": st.column_config.TextColumn("Flower Color", width="medium"),
-                        "Bloom Season": st.column_config.TextColumn("Bloom Season", width="medium"),
-                        "Fall Color": st.column_config.TextColumn("Fall Color", width="medium"),
-                        "Sun": st.column_config.TextColumn("Sun", width="medium"),
-                        "Form": st.column_config.TextColumn("Form", width="medium"),
-                    },
-                    key="quick_comparison_editor_" + "_".join(
-                        str(g).lower().replace(" ", "_") for g in sorted(selected_groups)
-                    ),
-                )
-
-                selected_ids = edited_comparison.loc[
-                    edited_comparison["Select"] == True, "id"
-                ].tolist()
-
-                if not selected_ids:
-                    st.info("Check one or more cultivars under **Show Details** to display detailed cards.")
+                if not selected_groups:
+                    st.info("Select one or more tree types above to continue.")
                 else:
-                    st.subheader("4. Review Selected Cultivars")
-                    detail_rows = selected_rows[selected_rows["id"].isin(selected_ids)].copy()
-
-                    for group in selected_groups:
-                        group_rows = detail_rows[detail_rows["sales_group"] == group]
-                        if group_rows.empty:
-                            continue
-
-                        meta = GROUP_OVERVIEWS.get(group, GROUP_OVERVIEWS["Other"])
-                        st.markdown(f"## {meta['label']}")
-                        st.caption(meta["summary"])
-
-                        for _, row in group_rows.iterrows():
-                            render_tree_card(row)
+                    if st.button("Continue to Quick Comparison", type="primary", use_container_width=True):
+                        st.session_state.previous_group_selection = tuple(selected_groups)
+                        st.session_state.comparison_started = True
+                        st.rerun()
 
 if not comparison_focus:
     with right:
