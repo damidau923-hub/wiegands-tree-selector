@@ -1,10 +1,7 @@
-# Acme Nursery Tree Sales Assistant — POC v37
+# Acme Nursery Tree Sales Assistant — POC v38
 
-## Photo presentation
-- Each detailed cultivar card is designed to show one approved nursery/Wiegand's whole-tree photo as the primary image.
-- Until an approved nursery image is supplied, the card displays a clear Nursery photo pending placeholder.
-- When a vetted public/reference URL exists, a secondary View More Photos link appears below the primary image area.
-- The public reference is supplementary; it does not replace the nursery image.
-- This structure can later be expanded to a 2–4 image approved nursery gallery per cultivar.
-
-All v36 workflow, comparison, readability, and inventory-label changes are retained.
+- All red primary workflow buttons use larger, bold white text.
+- Detailed Tree cards no longer show Full Match / Partial Match pills.
+- Detailed Tree cards show one prominent red Confirm Inventory button.
+- Match information remains in the recommendation and Quick Comparison stages.
+- All v37 photo and prior workflow/readability changes are retained.

@@ -305,6 +305,13 @@ st.markdown("""
     font-size:.9rem;
     margin-bottom:.4rem;
 }
+
+button[kind="primary"], button[kind="primary"] *,
+[data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primary"] * {
+    color:#ffffff !important;
+    font-size:1.10rem !important;
+    font-weight:750 !important;
+}
 </style>
 
 <style>
@@ -649,12 +656,12 @@ def render_tree_card(row):
                 unsafe_allow_html=True
             )
 
-        if row["match_status"] == "Full Match":
-            st.markdown('<div class="match-pill">FULL MATCH</div>', unsafe_allow_html=True)
-        else:
-            st.markdown('<div class="status-pill"><b>PARTIAL MATCH</b></div>', unsafe_allow_html=True)
-
-        st.markdown(f'<div class="status-pill">{row["wiegands_status"]}</div>', unsafe_allow_html=True)
+        st.button(
+            "Confirm Inventory",
+            type="primary",
+            use_container_width=True,
+            key=f"confirm_inventory_{row['id']}"
+        )
 
     with c2:
         st.markdown(f"### {row['common_name']}")
