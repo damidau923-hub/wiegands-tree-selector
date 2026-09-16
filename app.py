@@ -582,8 +582,12 @@ if comparison_focus:
         </style>""",
         unsafe_allow_html=True,
     )
-if comparison_focus:
-    # Focused comparison view: give the working table essentially the whole page.
+if comparison_focus and st.session_state.get("comparison_fullscreen", False):
+    # True app-level focus: the comparison occupies the page and the criteria
+    # panel is not rendered at all.
+    left = st.container()
+    right = None
+elif comparison_focus:
     left, right = st.columns([20, 0.01], gap="small")
 else:
     left, right = st.columns([2.6, 1], gap="large")
@@ -901,46 +905,47 @@ with left:
                         st.rerun()
 
 if not comparison_focus:
-    with right:
-        st.subheader("Customer Criteria")
-        criteria = [
-            f"Tree type: {tree_type}",
-            f"Maximum height: {max_height if max_height is not None else 'No limit'}",
-            f"Maximum width: {max_width if max_width is not None else 'No limit'}",
-            f"Flowering: {flowering}",
-            f"Sun: {sun}",
-        ]
-        for item in criteria:
-            st.write("• " + str(item))
+    if right is not None:
+        with right:
+            st.subheader("Customer Criteria")
+            criteria = [
+                f"Tree type: {tree_type}",
+                f"Maximum height: {max_height if max_height is not None else 'No limit'}",
+                f"Maximum width: {max_width if max_width is not None else 'No limit'}",
+                f"Flowering: {flowering}",
+                f"Sun: {sun}",
+            ]
+            for item in criteria:
+                st.write("• " + str(item))
+
+            st.divider()
+            st.markdown("#### Sales flow")
+            st.caption("1) Enter criteria. 2) Review broad choices. 3) Select the types the customer likes. 4) Compare cultivars and check the ones to review. 5) Review only the selected detailed cultivar cards.")
+
+            st.divider()
+            st.markdown("#### Mature size")
+            st.caption("Verified Michigan/regional size values are used when available. Other entries remain starter estimates pending cultivar verification.")
+
+            st.divider()
+            st.markdown("#### Match logic")
+            st.caption(
+                "Full Match means every selected requirement fully fits. "
+                "For height and width, May Fit means the lower end of the expected mature range is within the customer's limit "
+                "but the upper end exceeds it. For sun, preferred light can be a Full Match; tolerated light remains "
+                "visible as a Partial Match with an explanation."
+            )
+
+            with st.expander("POC development notes"):
+                st.write("• Connect live nursery cultivar/product inventory")
+                st.write("• Add approved nursery or supplier photography")
+                st.write("• Let AI summarize why each tree type fits the customer's request")
+                st.write("• Pass selected cultivars into the landscape visualizer")
 
         st.divider()
-        st.markdown("#### Sales flow")
-        st.caption("1) Enter criteria. 2) Review broad choices. 3) Select the types the customer likes. 4) Compare cultivars and check the ones to review. 5) Review only the selected detailed cultivar cards.")
-
-        st.divider()
-        st.markdown("#### Mature size")
-        st.caption("Verified Michigan/regional size values are used when available. Other entries remain starter estimates pending cultivar verification.")
-
-        st.divider()
-        st.markdown("#### Match logic")
-        st.caption(
-            "Full Match means every selected requirement fully fits. "
-            "For height and width, May Fit means the lower end of the expected mature range is within the customer's limit "
-            "but the upper end exceeds it. For sun, preferred light can be a Full Match; tolerated light remains "
-            "visible as a Partial Match with an explanation."
+        st.markdown(
+            '<div class="small-note">'
+            'POC architecture: tree data is stored separately in tree_database.csv. '
+            'That lets Acme Nursery replace or expand the tree list without rebuilding the web interface.'
+            '</div>',
+            unsafe_allow_html=True
         )
-
-        with st.expander("POC development notes"):
-            st.write("• Connect live nursery cultivar/product inventory")
-            st.write("• Add approved nursery or supplier photography")
-            st.write("• Let AI summarize why each tree type fits the customer's request")
-            st.write("• Pass selected cultivars into the landscape visualizer")
-
-    st.divider()
-    st.markdown(
-        '<div class="small-note">'
-        'POC architecture: tree data is stored separately in tree_database.csv. '
-        'That lets Acme Nursery replace or expand the tree list without rebuilding the web interface.'
-        '</div>',
-        unsafe_allow_html=True
-    )
