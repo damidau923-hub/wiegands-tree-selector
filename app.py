@@ -277,7 +277,18 @@ st.markdown("""
 }
 .small-note {
     font-size:.88rem;
-    color:#697269;
+    color:#303238;
+}
+.card-why {
+    color:#1f2328 !important;
+    font-size:1.05rem !important;
+    font-weight:500 !important;
+    line-height:1.45 !important;
+    margin:.35rem 0 .7rem 0 !important;
+}
+.card-why b {
+    color:#111418 !important;
+    font-weight:750 !important;
 }
 </style>
 
@@ -352,6 +363,8 @@ with st.sidebar:
         st.session_state.comparison_started = False
     if "details_started" not in st.session_state:
         st.session_state.details_started = False
+    if "comparison_fullscreen" not in st.session_state:
+        st.session_state.comparison_fullscreen = False
 
     if not st.session_state.search_started:
         if st.button("Find Trees", type="primary", use_container_width=True):
@@ -673,6 +686,23 @@ def group_summary_table(matches_df):
         ascending=[True, False, False, False]
     ).drop(columns=["other_last"])
 
+if st.session_state.get("comparison_fullscreen", False):
+    st.markdown("""
+    <style>
+    header[data-testid="stHeader"], [data-testid="stToolbar"],
+    [data-testid="stDecoration"], [data-testid="stStatusWidget"] {
+        display:none !important;
+    }
+    #MainMenu, footer {visibility:hidden !important;}
+    .block-container {
+        max-width:100% !important;
+        width:100% !important;
+        padding:.6rem 1rem 1rem 1rem !important;
+    }
+    [data-testid="stAppViewContainer"] > .main {width:100% !important;}
+    </style>
+    """, unsafe_allow_html=True)
+
 with left:
     if not find_trees:
         st.subheader("1. Broad Choices That Fit the Customer")
@@ -695,44 +725,13 @@ with left:
                 if st.button("← Back to Tree Types", type="primary", use_container_width=True):
                     st.session_state.comparison_started = False
                     st.session_state.details_started = False
+                    st.session_state.comparison_fullscreen = False
                     st.rerun()
             with nav_expand:
-                st.components.v1.html(
-                    """
-                    <button id="fsBtn" onclick="goFullscreen()" style="
-                        width:100%;
-                        background:#b71c1c;
-                        color:white;
-                        border:1px solid #b71c1c;
-                        border-radius:0.5rem;
-                        padding:0.62rem 0.75rem;
-                        font-size:1rem;
-                        font-weight:600;
-                        cursor:pointer;">
-                        ⛶ Full Screen Comparison
-                    </button>
-                    <script>
-                    function goFullscreen() {
-                        const doc = window.parent.document;
-                        const el = doc.documentElement;
-                        if (!doc.fullscreenElement) {
-                            if (el.requestFullscreen) {
-                                el.requestFullscreen();
-                            } else if (el.webkitRequestFullscreen) {
-                                el.webkitRequestFullscreen();
-                            }
-                        } else {
-                            if (doc.exitFullscreen) {
-                                doc.exitFullscreen();
-                            } else if (doc.webkitExitFullscreen) {
-                                doc.webkitExitFullscreen();
-                            }
-                        }
-                    }
-                    </script>
-                    """,
-                    height=48,
-                )
+                fs_label = "↙ Exit Full Screen" if st.session_state.comparison_fullscreen else "⛶ Full Screen Comparison"
+                if st.button(fs_label, type="primary", use_container_width=True):
+                    st.session_state.comparison_fullscreen = not st.session_state.comparison_fullscreen
+                    st.rerun()
 
             st.markdown("# Quick Comparison")
             st.markdown(
@@ -860,7 +859,10 @@ with left:
                         st.markdown('<div class="tree-card">', unsafe_allow_html=True)
                         st.markdown(f"### {meta['label']}")
                         st.write(meta["summary"])
-                        st.caption(meta["why"])
+                        st.markdown(
+                            f'<div class="card-why"><b>Why consider it:</b> {meta["why"]}</div>',
+                            unsafe_allow_html=True
+                        )
                         st.markdown(f"**Typical range in current POC:** {hmin}–{hmax} ft tall · {wmin}–{wmax} ft wide")
                         st.markdown(f"**Cultivar Matches:** {int(grow['full_count'])} Full · {int(grow['partial_count'])} Partial")
                         st.markdown('</div>', unsafe_allow_html=True)
