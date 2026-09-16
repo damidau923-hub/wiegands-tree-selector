@@ -350,6 +350,8 @@ with st.sidebar:
         st.session_state.review_recommendations = False
     if "comparison_started" not in st.session_state:
         st.session_state.comparison_started = False
+    if "details_started" not in st.session_state:
+        st.session_state.details_started = False
 
     if not st.session_state.search_started:
         if st.button("Find Trees", type="primary", use_container_width=True):
@@ -548,6 +550,9 @@ button[kind="primary"]:hover {
     background-color: #8e0000 !important;
     border-color: #8e0000 !important;
 }
+.tree-card, .tree-card p, .tree-card div, .tree-card span { color: #202124 !important; }
+.tree-card .meta { color: #303238 !important; }
+div[data-testid="stCaptionContainer"] p { color: #303238 !important; font-size: 1rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -685,9 +690,14 @@ with left:
                 st.session_state.comparison_started = False
                 st.rerun()
 
-            if st.button("← Back to Tree Types", use_container_width=True):
-                st.session_state.comparison_started = False
-                st.rerun()
+            nav_back, nav_expand = st.columns([1, 1])
+            with nav_back:
+                if st.button("← Back to Tree Types", use_container_width=True):
+                    st.session_state.comparison_started = False
+                    st.session_state.details_started = False
+                    st.rerun()
+            with nav_expand:
+                st.button("⛶ Comparison Expanded", disabled=True, use_container_width=True)
 
             st.markdown("# Quick Comparison")
             st.markdown(
@@ -761,9 +771,19 @@ with left:
             ].tolist()
 
             if not selected_ids:
-                st.info("Check one or more cultivars under **Show Details** to display detailed cards.")
+                st.session_state.details_started = False
+                st.info("Check one or more cultivars under **Show Details**, then continue to Tree Details.")
+            elif not st.session_state.details_started:
+                if st.button("Continue to Tree Details", type="primary", use_container_width=True):
+                    st.session_state.details_started = True
+                    st.rerun()
             else:
-                st.subheader("Review Selected Cultivars")
+                st.markdown("---")
+                st.markdown("# Tree Details")
+                if st.button("← Back to Quick Comparison", use_container_width=True):
+                    st.session_state.details_started = False
+                    st.rerun()
+
                 detail_rows = selected_rows[selected_rows["id"].isin(selected_ids)].copy()
                 for group in selected_groups:
                     group_rows = detail_rows[detail_rows["sales_group"] == group]
@@ -807,7 +827,7 @@ with left:
                         st.write(meta["summary"])
                         st.caption(meta["why"])
                         st.markdown(f"**Typical range in current POC:** {hmin}–{hmax} ft tall · {wmin}–{wmax} ft wide")
-                        st.markdown(f"**Matches:** {int(grow['full_count'])} full · {int(grow['partial_count'])} partial")
+                        st.markdown(f"**Cultivar Matches:** {int(grow['full_count'])} Full · {int(grow['partial_count'])} Partial")
                         st.markdown('</div>', unsafe_allow_html=True)
 
                 # Larger, high-emphasis Step 2.
