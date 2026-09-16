@@ -1,8 +1,8 @@
-# Acme Nursery Tree Sales Assistant — POC v28
+# Acme Nursery Tree Sales Assistant — POC v29
 
-## Demo refinements
-- Removed the redundant “Tap Review Recommended Trees” informational box.
-- Added “You can select multiple tree types.” under Step 2.
-- Fixed Quick Comparison selection state so changing tree groups does not carry over stale Show Details selections.
-- Detailed cultivar cards remain hidden until the salesperson explicitly checks cultivars under Show Details.
-- Retains the v27 focused Quick Comparison view and Back to Recommendations button.
+## Quick Comparison hotfix
+Fixed the workflow transition that could prevent Quick Comparison from generating after clicking Continue.
+
+The selected tree groups are now preserved explicitly when Continue is clicked, and the comparison focus state is no longer reset during the rerun that opens Quick Comparison.
+
+Retains all v28 demo refinements.

@@ -709,9 +709,9 @@ with left:
             )
 
             current_group_selection = tuple(selected_groups)
-            previous_group_selection = st.session_state.get("previous_group_selection")
-            if previous_group_selection is not None and previous_group_selection != current_group_selection:
-                st.session_state.comparison_started = False
+            # Preserve the chosen groups so the focused Quick Comparison can
+            # render them after Continue. Do not reset comparison state here;
+            # that previously prevented the comparison from opening reliably.
             st.session_state.previous_group_selection = current_group_selection
 
             if not selected_groups:
@@ -719,6 +719,7 @@ with left:
                 st.info("Select one or more tree types above, then tap **Continue to Quick Comparison**.")
             elif not st.session_state.comparison_started:
                 if st.button("Continue to Quick Comparison", type="primary", use_container_width=True):
+                    st.session_state.previous_group_selection = tuple(selected_groups)
                     st.session_state.comparison_started = True
                     st.rerun()
             else:
