@@ -1,20 +1,11 @@
-# Acme Nursery Tree Sales Assistant — POC v25
+# Acme Nursery Tree Sales Assistant — POC v26
 
-## New in v25: Bloom Season
+## Demo workflow improvements
 
-**Bloom Season** has been added to:
-- the tree database
-- Quick Comparison
-- detailed cultivar cards
+- **Find Trees** changes to a disabled gray **✓ Trees Found** button after it is selected.
+- A prominent **Review Recommended Trees** button opens the recommendation summary.
+- After the customer selects tree types, a prominent **Continue to Quick Comparison** button advances the workflow.
+- The salesperson no longer needs to find or collapse an expander to move forward.
+- **Start New Search** resets the guided workflow.
 
-Examples:
-- Eastern Redbud — Early to Mid Spring
-- Serviceberry — Early Spring
-- Kousa Dogwood — Late Spring to Early Summer
-- Venus Dogwood — Late Spring
-- Cornelian Cherry Dogwood — Late Winter to Early Spring
-- Ivory Silk Japanese Tree Lilac — Late Spring to Early Summer
-- Limelight Hydrangea on Standard — Mid to Late Summer
-- Rose of Sharon Tree Form — Mid Summer to Early Fall
-
-Unknown cultivar-specific values remain marked **To verify** rather than being guessed.
+All v25 plant data and matching features are retained.

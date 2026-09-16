@@ -346,14 +346,27 @@ with st.sidebar:
 
     if "search_started" not in st.session_state:
         st.session_state.search_started = False
+    if "review_recommendations" not in st.session_state:
+        st.session_state.review_recommendations = False
+    if "comparison_started" not in st.session_state:
+        st.session_state.comparison_started = False
 
-    if st.button("Find Trees", type="primary", use_container_width=True):
-        st.session_state.search_started = True
+    if not st.session_state.search_started:
+        if st.button("Find Trees", type="primary", use_container_width=True):
+            st.session_state.search_started = True
+            st.session_state.review_recommendations = False
+            st.session_state.comparison_started = False
+            st.rerun()
+    else:
+        # Disabled buttons render gray and confirm the search has already been run.
+        st.button("✓ Trees Found", disabled=True, use_container_width=True)
 
     find_trees = st.session_state.search_started
 
     if find_trees and st.button("Start New Search", use_container_width=True):
         st.session_state.search_started = False
+        st.session_state.review_recommendations = False
+        st.session_state.comparison_started = False
         st.rerun()
 
     st.divider()
@@ -645,6 +658,13 @@ with left:
                 "then select one or more groups to see the actual cultivars."
             )
 
+            if not st.session_state.review_recommendations:
+                if st.button("Review Recommended Trees", type="primary", use_container_width=True):
+                    st.session_state.review_recommendations = True
+                    st.rerun()
+                st.info("Tap **Review Recommended Trees** to open the recommendation summary.")
+                st.stop()
+
             cols = st.columns(2)
             for pos, (_, grow) in enumerate(group_table.iterrows()):
                 group = grow["sales_group"]
@@ -672,8 +692,19 @@ with left:
                 placeholder="Example: Serviceberry, Hydrangea Tree on Standard"
             )
 
+            current_group_selection = tuple(selected_groups)
+            previous_group_selection = st.session_state.get("previous_group_selection")
+            if previous_group_selection is not None and previous_group_selection != current_group_selection:
+                st.session_state.comparison_started = False
+            st.session_state.previous_group_selection = current_group_selection
+
             if not selected_groups:
-                st.info("Select one or more tree types above to drill down to cultivars.")
+                st.session_state.comparison_started = False
+                st.info("Select one or more tree types above, then tap **Continue to Quick Comparison**.")
+            elif not st.session_state.comparison_started:
+                if st.button("Continue to Quick Comparison", type="primary", use_container_width=True):
+                    st.session_state.comparison_started = True
+                    st.rerun()
             else:
                 selected_rows = visible_matches[visible_matches["sales_group"].isin(selected_groups)].copy()
                 selected_rows["status_order"] = selected_rows["match_status"].map({"Full Match": 0, "Partial Match": 1})
