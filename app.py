@@ -678,7 +678,6 @@ with left:
                 if st.button("Review Recommended Trees", type="primary", use_container_width=True):
                     st.session_state.review_recommendations = True
                     st.rerun()
-                st.info("Tap **Review Recommended Trees** to open the recommendation summary.")
                 st.stop()
 
             cols = st.columns(2)
@@ -701,6 +700,7 @@ with left:
                     st.markdown('</div>', unsafe_allow_html=True)
 
             st.subheader("2. Choose Tree Types to Review")
+            st.caption("You can select multiple tree types.")
             selected_groups = st.multiselect(
                 "Which types does the customer want to see?",
                 options=available_groups,
@@ -789,18 +789,19 @@ with left:
                         "Sun": st.column_config.TextColumn("Sun", width="medium"),
                         "Form": st.column_config.TextColumn("Form", width="medium"),
                     },
-                    key="quick_comparison_editor",
+                    key="quick_comparison_editor_" + "_".join(
+                        str(g).lower().replace(" ", "_") for g in sorted(selected_groups)
+                    ),
                 )
 
                 selected_ids = edited_comparison.loc[
                     edited_comparison["Select"] == True, "id"
                 ].tolist()
 
-                st.subheader("4. Review Selected Cultivars")
-
                 if not selected_ids:
-                    st.info("Check one or more cultivars in the Quick Comparison table to display their detailed cards.")
+                    st.info("Check one or more cultivars under **Show Details** to display detailed cards.")
                 else:
+                    st.subheader("4. Review Selected Cultivars")
                     detail_rows = selected_rows[selected_rows["id"].isin(selected_ids)].copy()
 
                     for group in selected_groups:
