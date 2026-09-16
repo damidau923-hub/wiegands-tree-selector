@@ -369,6 +369,18 @@ with st.sidebar:
         "Sun needs",
         ["Any", "Full Sun", "Partial Sun", "Partial Shade", "Shade"]
     )
+    st.markdown(
+        """
+        <div style="font-size:1rem; line-height:1.5; color:#202124; margin-top:-0.35rem; margin-bottom:0.75rem;">
+        <b>Sunlight guide:</b><br>
+        <b>Full Sun:</b> 6+ hours of direct sunlight per day<br>
+        <b>Partial Sun:</b> 4–6 hours of direct sunlight per day<br>
+        <b>Partial Shade:</b> 2–4 hours of direct sunlight per day<br>
+        <b>Shade:</b> less than 2 hours of direct sunlight per day
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     prioritize_wiegands = st.checkbox(
         "Prioritize Acme Nursery priority candidates",
