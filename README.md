@@ -1,8 +1,11 @@
-# Acme Nursery Tree Sales Assistant — POC v34
+# Acme Nursery Tree Sales Assistant — POC v35
 
-## Full Screen Comparison fix
-- Full Screen Comparison now structurally removes the entire Find a Tree criteria panel.
-- The Quick Comparison becomes the only main workspace and uses the full available app width.
-- Exit Full Screen restores the normal layout.
-- Back to Tree Types remains red.
-- Retains the improved high-contrast “Why consider it” text from v33.
+## Full Screen Comparison correction
+The Find a Tree area is implemented as the Streamlit sidebar, not the right-side criteria panel. In Full Screen Comparison mode v35 now explicitly removes:
+- the entire Find a Tree sidebar
+- the sidebar collapse control
+- the Acme Nursery hero/header area
+- Streamlit header/tool chrome where possible
+- extra page margins
+
+The Quick Comparison remains with the red Back to Tree Types and Exit Full Screen controls and receives the full available application width.

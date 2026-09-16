@@ -694,7 +694,9 @@ if st.session_state.get("comparison_fullscreen", False):
     st.markdown("""
     <style>
     header[data-testid="stHeader"], [data-testid="stToolbar"],
-    [data-testid="stDecoration"], [data-testid="stStatusWidget"] {
+    [data-testid="stDecoration"], [data-testid="stStatusWidget"],
+    [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"],
+    .hero {
         display:none !important;
     }
     #MainMenu, footer {visibility:hidden !important;}
@@ -704,6 +706,8 @@ if st.session_state.get("comparison_fullscreen", False):
         padding:.6rem 1rem 1rem 1rem !important;
     }
     [data-testid="stAppViewContainer"] > .main {width:100% !important;}
+    section[data-testid="stSidebar"] {display:none !important;}
+    [data-testid="stAppViewContainer"] {margin-left:0 !important;}
     </style>
     """, unsafe_allow_html=True)
 
