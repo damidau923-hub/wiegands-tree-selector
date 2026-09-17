@@ -613,6 +613,12 @@ button[kind="primary"]:hover {
     background-color: #8e0000 !important;
     border-color: #8e0000 !important;
 }
+button[kind="primary"], button[kind="primary"] *,
+[data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primary"] *,
+[data-testid="stBaseButton-primary"] p, [data-testid="stBaseButton-primary"] span {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
 .tree-card, .tree-card p, .tree-card div, .tree-card span { color: #202124 !important; }
 .tree-card .meta { color: #303238 !important; }
 div[data-testid="stCaptionContainer"] p { color: #202124 !important; font-size: 1rem !important; }
