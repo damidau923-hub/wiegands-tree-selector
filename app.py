@@ -214,7 +214,7 @@ st.markdown("""
 }
 .hero-sub {
     font-size: 1.05rem;
-    color: #586458;
+    color: #202124;
 }
 .tree-card {
     border: 1px solid #dce6d7;
@@ -258,7 +258,7 @@ st.markdown("""
     margin-top:8px;
 }
 .meta {
-    color:#5f685f;
+    color:#303238;
     font-size:.92rem;
 }
 .reason {
@@ -631,6 +631,18 @@ div[data-testid="stCaptionContainer"] p { color: #202124 !important; font-size: 
 }
 small, .small-note, .meta {
     color: #303238 !important;
+}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] label p,
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p,
+[data-testid="stSidebar"] small {
+    color: #202124 !important;
+    -webkit-text-fill-color: #202124 !important;
+}
+[data-testid="stAppViewContainer"] [data-testid="stCaptionContainer"] p,
+[data-testid="stAppViewContainer"] small {
+    color: #303238 !important;
+    -webkit-text-fill-color: #303238 !important;
 }
 </style>
 """, unsafe_allow_html=True)
