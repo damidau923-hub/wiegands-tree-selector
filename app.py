@@ -323,6 +323,20 @@ button, [data-testid="stBaseButton-secondary"], [data-testid="stBaseButton-prima
     font-size: 1rem !important;
     font-weight: 650 !important;
 }
+
+.find-tree-title {
+    background: #2f5d3a;
+    color: #ffffff !important;
+    font-size: 1.55rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    padding: 14px 16px;
+    margin: 0 0 18px 0;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    letter-spacing: .02em;
+}
 .tree-card { padding: 20px !important; }
 .tree-card img { border-radius: 14px; }
 .match-pill { font-size: 1rem !important; padding: 8px 12px !important; }
@@ -347,7 +361,7 @@ st.markdown("""
 
 # ---------- Sidebar filters ----------
 with st.sidebar:
-    st.header("Find a Tree")
+    st.markdown('<div class="find-tree-title">FIND A TREE</div>', unsafe_allow_html=True)
 
     tree_types = ["Any"] + sorted(df["tree_type"].dropna().unique().tolist())
     tree_type = st.selectbox("Tree type", tree_types)
