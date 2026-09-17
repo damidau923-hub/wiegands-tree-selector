@@ -873,7 +873,7 @@ with left:
                 comparison = selected_rows.copy()
                 comparison["Select"] = False
                 comparison["Tree / Cultivar"] = comparison["common_name"]
-                comparison["Match"] = comparison["match_status"]
+                comparison["Criteria Match"] = comparison["match_status"]
                 comparison["Height"] = comparison.apply(
                     lambda r: format_range(r["height_min"], r["height_max"]), axis=1
                 )
@@ -889,7 +889,7 @@ with left:
                 comparison["Sun"] = comparison["sun_needs"].fillna("Not specified").str.replace(";", ", ", regex=False)
                 comparison["Form"] = comparison["form"].fillna("Tree Form")
                 comparison = comparison[
-                    ["Select", "id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers",
+                    ["Select", "id", "Tree / Cultivar", "Criteria Match", "Height", "Width", "Flowers",
                      "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"]
                 ]
 
@@ -900,7 +900,7 @@ with left:
                     comparison,
                     hide_index=True,
                     use_container_width=True,
-                    disabled=["id", "Tree / Cultivar", "Match", "Height", "Width", "Flowers",
+                    disabled=["id", "Tree / Cultivar", "Criteria Match", "Height", "Width", "Flowers",
                               "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"],
                     column_config={
                         "Select": st.column_config.CheckboxColumn(
@@ -909,7 +909,7 @@ with left:
                         ),
                         "id": None,
                         "Tree / Cultivar": st.column_config.TextColumn("Cultivar", width="medium"),
-                        "Match": st.column_config.TextColumn("Match", width="small"),
+                        "Criteria Match": st.column_config.TextColumn("Criteria Match", width="small"),
                         "Height": st.column_config.TextColumn("Height", width="small"),
                         "Width": st.column_config.TextColumn("Width", width="small"),
                         "Flowers": st.column_config.TextColumn("Flowers", width="small"),
