@@ -312,6 +312,20 @@ button[kind="primary"], button[kind="primary"] *,
     font-size:1.10rem !important;
     font-weight:750 !important;
 }
+
+/* Quick Comparison table headers: stronger contrast and clear action cue. */
+[data-testid="stDataEditor"] [role="columnheader"],
+[data-testid="stDataEditor"] [role="columnheader"] * {
+    color:#000000 !important;
+    font-weight:800 !important;
+}
+/* The first visible column is the customer action field (Details). */
+[data-testid="stDataEditor"] [role="columnheader"]:first-of-type,
+[data-testid="stDataEditor"] [role="columnheader"]:first-of-type * {
+    background:#b42318 !important;
+    color:#ffffff !important;
+    font-weight:800 !important;
+}
 </style>
 
 <style>
@@ -904,7 +918,7 @@ with left:
                               "Flower Color", "Bloom Season", "Fall Color", "Sun", "Form"],
                     column_config={
                         "Select": st.column_config.CheckboxColumn(
-                            "Details", help="Select cultivars to review in Tree Details.",
+                            "DETAILS", help="Select cultivars to review in Tree Details.",
                             default=False, width="small"
                         ),
                         "id": None,
