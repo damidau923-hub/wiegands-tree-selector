@@ -313,18 +313,28 @@ button[kind="primary"], button[kind="primary"] *,
     font-weight:750 !important;
 }
 
-/* Quick Comparison table headers: stronger contrast and clear action cue. */
-[data-testid="stDataEditor"] [role="columnheader"],
-[data-testid="stDataEditor"] [role="columnheader"] * {
-    color:#000000 !important;
-    font-weight:800 !important;
+/* Quick Comparison: Streamlit paints Data Editor headers on a canvas, so
+   target the Glide Data Grid theme variables rather than DOM columnheader nodes. */
+[data-testid="stDataEditor"] {
+    --gdg-text-header: #000000 !important;
+    --gdg-text-header-selected: #000000 !important;
+    --gdg-header-font-style: 800 14px sans-serif !important;
 }
-/* The first visible column is the customer action field (Details). */
-[data-testid="stDataEditor"] [role="columnheader"]:first-of-type,
-[data-testid="stDataEditor"] [role="columnheader"]:first-of-type * {
-    background:#b42318 !important;
+.quick-details-header {
+    display:inline-block;
+    background:#b42318;
     color:#ffffff !important;
-    font-weight:800 !important;
+    font-size:1rem;
+    font-weight:800;
+    padding:.48rem 1.05rem;
+    border-radius:6px 6px 0 0;
+    margin:.15rem 0 -.15rem 0;
+    letter-spacing:.02em;
+}
+.quick-details-note {
+    color:#111418 !important;
+    font-weight:700;
+    margin-left:.55rem;
 }
 </style>
 
@@ -910,6 +920,12 @@ with left:
                 editor_key = "quick_comparison_editor_" + "_".join(
                     str(g).lower().replace(" ", "_") for g in sorted(selected_groups)
                 )
+                st.markdown(
+                    '<span class="quick-details-header">DETAILS</span>'
+                    '<span class="quick-details-note">Select the boxes in the Details column for trees the customer wants to review.</span>',
+                    unsafe_allow_html=True,
+                )
+
                 edited_comparison = st.data_editor(
                     comparison,
                     hide_index=True,
